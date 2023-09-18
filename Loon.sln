@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loon.Tokenizer", "Loon.Tokenizer\Loon.Tokenizer.csproj", "{3F1D3B9C-8ED1-4D78-8F16-A0F91A176A4F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loon.Parser", "Loon.Parser\Loon.Parser.csproj", "{D1D3216C-F76B-40E2-9BDA-4F4D1DE18D63}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loon.Analyzer", "Loon.Analyzer\Loon.Analyzer.csproj", "{BA2C6D02-BA31-4F72-8264-1AC55691E380}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loon.Shared", "Loon.Shared\Loon.Shared.csproj", "{40BE6629-C8C6-4DFF-8847-1EF7079EDF61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loon.Compiler", "Loon.Compiler\Loon.Compiler.csproj", "{8B425CAA-E561-4F12-87B6-4A2C5C67031E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loon.Cmd", "Loon.Cmd\Loon.Cmd.csproj", "{95BC031C-C847-497A-A724-F3AAB366AB04}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F1D3B9C-8ED1-4D78-8F16-A0F91A176A4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F1D3B9C-8ED1-4D78-8F16-A0F91A176A4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F1D3B9C-8ED1-4D78-8F16-A0F91A176A4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F1D3B9C-8ED1-4D78-8F16-A0F91A176A4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1D3216C-F76B-40E2-9BDA-4F4D1DE18D63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1D3216C-F76B-40E2-9BDA-4F4D1DE18D63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1D3216C-F76B-40E2-9BDA-4F4D1DE18D63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1D3216C-F76B-40E2-9BDA-4F4D1DE18D63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA2C6D02-BA31-4F72-8264-1AC55691E380}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA2C6D02-BA31-4F72-8264-1AC55691E380}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA2C6D02-BA31-4F72-8264-1AC55691E380}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA2C6D02-BA31-4F72-8264-1AC55691E380}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40BE6629-C8C6-4DFF-8847-1EF7079EDF61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40BE6629-C8C6-4DFF-8847-1EF7079EDF61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40BE6629-C8C6-4DFF-8847-1EF7079EDF61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40BE6629-C8C6-4DFF-8847-1EF7079EDF61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B425CAA-E561-4F12-87B6-4A2C5C67031E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B425CAA-E561-4F12-87B6-4A2C5C67031E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B425CAA-E561-4F12-87B6-4A2C5C67031E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B425CAA-E561-4F12-87B6-4A2C5C67031E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95BC031C-C847-497A-A724-F3AAB366AB04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95BC031C-C847-497A-A724-F3AAB366AB04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95BC031C-C847-497A-A724-F3AAB366AB04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95BC031C-C847-497A-A724-F3AAB366AB04}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AE2107D3-F692-43A4-BD4C-282B2826D043}
+	EndGlobalSection
+EndGlobal

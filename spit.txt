@@ -1,0 +1,23 @@
+6:17 AM 9/18/2023============================================================
+
+
+type coord {
+	.x int32
+	.y int32
+}
+
+type myType {
+	.x int32
+	.y double
+	.s string
+	.c coord __inline__
+	.cp ptr<coord>
+}
+
+fn main(): int32 {
+	
+	var x = create myType();
+	x.c = create coord();
+	x.c.x =0;
+	x.c = y.c
+}
