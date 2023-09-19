@@ -12,4 +12,219 @@
     <ProjectReference Include="..\Loon.Shared\Loon.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="fasm\" />
+    <Folder Include="Assembly\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assembly\stdlib.inc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\FASM.EXE">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\FASM.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\FASMW.EXE">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\FASMW.INI">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\ADVAPI32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\COMCTL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\COMDLG32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\GDI32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\KERNEL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\SHELL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\USER32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\API\WSOCK32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\UTF8.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1250.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1251.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1252.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1253.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1254.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1255.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1256.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1257.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN1258.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\ENCODING\WIN874.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\COMCTL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\COMCTL64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\COMDLG32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\COMDLG64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\GDI32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\GDI64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\KERNEL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\KERNEL64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\SHELL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\SHELL64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\USER32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\USER64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\EQUATES\WSOCK32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\COM32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\COM64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\EXPORT.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\IF.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\IMPORT32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\IMPORT64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\MASM.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\PROC32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\PROC64.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\RESOURCE.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\MACRO\STRUCT.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\ADVAPI32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\COMCTL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\COMDLG32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\GDI32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\KERNEL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\SHELL32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\USER32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\PCOUNT\WSOCK32.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32A.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32AX.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32AXP.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32W.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32WX.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN32WXP.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64A.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64AX.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64AXP.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64W.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64WX.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\INCLUDE\WIN64WXP.INC">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="fasm\LICENSE.TXT">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -96,6 +96,11 @@ namespace Loon.Compiler.Models
             return outputPath;
         }
 
+        internal void Add(AssemblyInclude include)
+        {
+            _includes.Add(include);
+        }
+
         internal void Add(CompiledFunction compiledFunction)
         {
             _currentProcessDefinition = compiledFunction;
@@ -106,6 +111,11 @@ namespace Loon.Compiler.Models
         {
             if (_currentProcessDefinition == null) throw new InvalidOperationException("cannot add local variable to global scope");
             _currentProcessDefinition.AddLocalVariable(localVariable);
+        }
+
+        internal void Add(StaticVariable variable)
+        {
+            _staticData.Add(variable);
         }
 
         internal void AddStaticData(CrateType type, object value, out LocalVariable alias)

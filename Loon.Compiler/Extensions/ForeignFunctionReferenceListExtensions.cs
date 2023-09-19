@@ -13,13 +13,13 @@ namespace Loon.Compiler.Extensions
         {
             var sb = new StringBuilder();
             var grouped = ffis.GroupBy(f => (f.LibraryAlias, f.LibraryPath));
-            sb.AppendLine("library".Indent(indentLevel));
+            sb.AppendLine("library \\".Indent(indentLevel));
          
-            sb.AppendLine(string.Join(", \\", grouped.Select(g => $"{g.Key.LibraryAlias}, '{g.Key.LibraryPath}'".Indent(indentLevel + 1))).Indent(indentLevel + 1));
+            sb.AppendLine(string.Join(", \\\r\n", grouped.Select(g => $"{g.Key.LibraryAlias}, '{g.Key.LibraryPath}'".Indent(indentLevel + 1))));
             foreach(var group in grouped)
             {
                 sb.AppendLine($"import {group.Key.LibraryAlias}, \\".Indent(indentLevel));
-                sb.AppendLine(string.Join(", \\", group.Select(ffi => $"{ffi.FunctionAlias}, '{ffi.FunctionAlias}'".Indent(indentLevel+1))).Indent(indentLevel + 1));
+                sb.AppendLine(string.Join(", \\\r\n", group.Select(ffi => $"{ffi.FunctionAlias}, '{ffi.FunctionAlias}'".Indent(indentLevel+1))));
             }
             return sb.ToString();
         }

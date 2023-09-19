@@ -10,20 +10,18 @@ namespace Loon.Compiler._Generator
 {
     internal static class Generator
     {
-        private static Dictionary<CrateType, int> _uniqueIndeces = new Dictionary<CrateType, int>();
+        private static Dictionary<string, int> _uniqueIndeces = new Dictionary<string, int>();
 
 
         public static string UniqueTypeIdentifier(CrateType type)
         {
             int index = 0;
-            if (_uniqueIndeces.TryGetValue(type, out index))
+            if (_uniqueIndeces.TryGetValue(type.Name, out index))
             {
                 index++;
             }
-            else
-            {
-                _uniqueIndeces[type] = index;
-            }
+            _uniqueIndeces[type.Name] = index;
+
             return $"{type.Name}_{index}";
         }
 
@@ -36,7 +34,7 @@ namespace Loon.Compiler._Generator
         public static LocalVariable LocalVariable(CrateType type, bool isDiscard = false)
         {
             
-            return new LocalVariable(type, UniqueTypeIdentifier(type));
+            return new LocalVariable(type, UniqueTypeIdentifier(type), isDiscard);
         }
 
         public static LocalVariable LocalVariable(CrateType type, out LocalVariable local)

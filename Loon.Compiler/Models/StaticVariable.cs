@@ -48,9 +48,10 @@ namespace Loon.Compiler.Models
 
         private static string EscapeString(string value)
         {
+            if (value.Length == 0) return "0";
             var bytes = Encoding.UTF8.GetBytes(value);
             var strBytes = BitConverter.ToString(bytes);
-            return $"{strBytes.Replace('-', ',')},0";
+            return $"{strBytes.Replace("-", "h,")}h,0";
         }
     }
 }

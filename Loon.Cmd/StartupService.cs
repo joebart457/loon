@@ -13,11 +13,12 @@ namespace Loon.Cmd
     [Entry("loon")]
     internal class StartupService
     {
-        public static int Compile(string inputPath, string? outputPath = null, string? assemblyOutputPath = null, string? outputType = "exe", bool noGC = false)
+        [Command()]
+        public static int Compile(string inputPath, string? outputPath = null, string? assemblyOutputPath = null, string? target = "exe", bool noGC = false)
         {
-            if (!Enum.TryParse<OutputType>(outputType, out var compilerOutputType))
+            if (!Enum.TryParse<OutputType>(target, true, out var compilerOutputType))
             {
-                CliLogger.LogError($"output type {outputType} is not supported");
+                CliLogger.LogError($"target type {target} is not supported");
                 return -1;
             }
             try

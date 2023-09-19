@@ -11,6 +11,7 @@ using Loon.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,15 +45,27 @@ namespace Loon.Compiler
             {
                 CompilationState = new();
                 CompilationState.Initialize(settings);
+                AddDefaultIncludes();
+                AddPlatformSpecificCode();
                 foreach (var type in analysisResult.CrateTypes) CompileType(type);
                 foreach (var fn in analysisResult.CrateFunctions) CompileFunction(fn);
                 CompilationState.GenerateAssembly();
-
-                return null;
+                return CompilationState.GenerateExecutable();
             }catch (Exception ex)
             {
                 return ex.Message;
             }
+        }
+        private void AddDefaultIncludes()
+        {
+            CompilationState.Add(new AssemblyInclude($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\fasm\\INCLUDE\\macro\\proc32.inc"));
+            CompilationState.Add(new AssemblyInclude($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\fasm\\INCLUDE\\win32ax.inc"));
+            CompilationState.Add(new AssemblyInclude($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\Assembly\\stdlib.inc"));
+        }
+
+        private void AddPlatformSpecificCode()
+        {
+            CompilationState.Add(new StaticVariable(BuiltinTypes.Int32, "_hHeap", 0));
         }
 
         private void CompileType(CrateType type)
@@ -83,10 +96,10 @@ namespace Loon.Compiler
         {
             CompilationState.Add(Templates.Comment(statement));
             if (statement is ExpressionStatement expressionStatement) CompileExpressionStatement(expressionStatement);
-            if (statement is IfStatement ifStatement) CompileIfStatement(ifStatement);
-            if (statement is ReturnStatement returnStatement) CompileReturnStatement(returnStatement);
-            if (statement is VariableDeclarationStatement variableDeclarationStatement) CompileVariableDeclarationStatement(variableDeclarationStatement);
-            if (statement is BlockStatement blockStatement) CompileBlockStatement(blockStatement);
+            else if (statement is IfStatement ifStatement) CompileIfStatement(ifStatement);
+            else if (statement is ReturnStatement returnStatement) CompileReturnStatement(returnStatement);
+            else if (statement is VariableDeclarationStatement variableDeclarationStatement) CompileVariableDeclarationStatement(variableDeclarationStatement);
+            else if (statement is BlockStatement blockStatement) CompileBlockStatement(blockStatement);
             else throw new Exception($"unsupported statement type {statement.GetType().Name}");
         }
 
@@ -273,6 +286,10 @@ namespace Loon.Compiler
             else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.Int32)
             {
                 CompilationState.Add(Templates.FinishCall(callExpression.CrateFunction, destination.Symbol));
+            }
+            else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.Void)
+            {
+                //pass
             }
             else 
             {

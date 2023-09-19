@@ -67,6 +67,7 @@ namespace Loon.Analyzer._Analyzer
             _registeredFunctions.Clear();
             _currentRunData = new();
             RegisterBuiltinTypes();
+            RegisterBuiltinFunctions();
             FirstPass(declarations);
             SecondPass(declarations);
             CheckEntry();
@@ -122,7 +123,7 @@ namespace Loon.Analyzer._Analyzer
 
         private CrateFunction AnalyzeFunctionDeclaration(FunctionDeclaration functionDeclaration)
         {
-            var returnType = ResolveTypeSymbol(functionDeclaration.ReturnType);
+            var returnType = ResolveReturnTypeSymbol(functionDeclaration.ReturnType);
             var fnName = functionDeclaration.FunctionName;
             var parameters = functionDeclaration.Parameters.Select(p => new CrateParameterInfo(p.ParameterName, ResolveTypeSymbol(p.ParameterType))).ToList();
             var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new());           
@@ -138,7 +139,7 @@ namespace Loon.Analyzer._Analyzer
 
         private CrateFunction GatherFunctionSignature(FunctionDeclaration functionDeclaration)
         {
-            var returnType = ResolveTypeSymbol(functionDeclaration.ReturnType);
+            var returnType = ResolveReturnTypeSymbol(functionDeclaration.ReturnType);
             var fnName = functionDeclaration.FunctionName;
             var parameters = functionDeclaration.Parameters.Select(p => new CrateParameterInfo(p.ParameterName, ResolveTypeSymbol(p.ParameterType))).ToList();
             var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new());
@@ -308,11 +309,31 @@ namespace Loon.Analyzer._Analyzer
             throw new Exception($"unable to resolve symbol '{field.FieldType.Name}' to type");
         }
 
+        private CrateType ResolveReturnTypeSymbol(TypeSymbol typeSymbol)
+        {
+            if (_registeredTypes.TryGetValue(typeSymbol.Name, out var type) && type != null)
+            {
+                return type;
+            }
+            if (typeSymbol.Name == BuiltinTypes.Void.Name) return BuiltinTypes.Void;
+            throw new Exception($"unable to resolve symbol '{typeSymbol.Name}' to type");
+        }
+
         private void RegisterBuiltinTypes()
         {
             _registeredTypes.Add("int32", BuiltinTypes.Int32);
             _registeredTypes.Add("string", BuiltinTypes.String);
             _registeredTypes.Add("double", BuiltinTypes.Double);
+            //_registeredTypes.Add("void", BuiltinTypes.Void);
+        }
+
+        private void RegisterBuiltinFunctions()
+        {
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "GetProcessHeap", BuiltinTypes.Int32, new(), new()));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "ExitProcess", BuiltinTypes.Void, new(), new()));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapAlloc", BuiltinTypes.Int32, new() { new("hHeap", BuiltinTypes.Int32), new("mode", BuiltinTypes.Int32), new("nBytes", BuiltinTypes.Int32) }, new()));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapFree", BuiltinTypes.Int32, new() { new("dataPtr", BuiltinTypes.Int32) }, new()));
+
         }
 
         private void RegisterFunction(CrateFunction crateFunction)
@@ -423,5 +444,6 @@ namespace Loon.Analyzer._Analyzer
         public static CrateType String = new BuiltinType("string");
         public static CrateType Double = new BuiltinType("double", true);
         public static CrateType Nullptr = new BuiltinType("nullptr_t", false);
+        public static CrateType Void = new BuiltinType("void_t", false);
     }
 }

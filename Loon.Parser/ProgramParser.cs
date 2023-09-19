@@ -86,7 +86,7 @@ namespace Loon.Parser
         {
             var callingConvention = CallingConvention.CInvoke;
             var module = Consume(TokenTypes.FunctionModule, "expect module location in foreign function declaration");
-            if (!module.Lexeme.IsValidModulePath()) throw new Exception($"{module.Lexeme} is not a valid ffi path");
+            if (!module.Lexeme.IsValidModulePath()) throw new ParsingException($"{module.Lexeme} is not a valid ffi path", Previous());
             if (Match(TokenTypes.CInvoke))
             {
                 callingConvention = CallingConvention.CInvoke;

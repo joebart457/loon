@@ -1,2 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿
+using CliParser;
+using Logger;
+using Loon.Cmd;
+
+args.ResolveWithTryCatch<StartupService>((ex) => CliLogger.LogError(ex.Message));
