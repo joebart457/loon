@@ -16,5 +16,10 @@ namespace Loon.Analyzer.Models
         {
             Type = type;
         }
+
+        public virtual string RegenerateCode(int indentLevel = 0)
+        {
+            return "Expression";
+        }
     }
 }

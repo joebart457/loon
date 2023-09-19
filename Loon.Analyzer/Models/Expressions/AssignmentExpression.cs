@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,11 @@ namespace Loon.Analyzer.Models
             InstanceTarget = instanceTarget;
             AssignmentTarget = assignmentTarget;
             ValueToAssign = valueToAssign;
+        }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"{(InstanceTarget == null? "" : $"{InstanceTarget.RegenerateCode(0)}.")}{AssignmentTarget.Name} = {ValueToAssign.RegenerateCode(0)}".Indent(indentLevel);
         }
     }
 }

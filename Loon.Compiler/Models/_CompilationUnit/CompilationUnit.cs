@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Models;
 using Loon.Compiler.Extensions;
 using System;
 using System.Collections.Generic;
@@ -10,12 +11,19 @@ namespace Loon.Compiler.Models._CompilationUnit
 {
     internal class CompilationUnit
     {
-        public ResolvedStatement? Origin { get; private set; } = null;
+        public ResolvedStatement? Statement_Origin { get; private set; } = null;
+        public TypedExpression? Expression_Origin { get; private set;} = null;
         public List<CodePiece> CodePieces { get; private set; } = new();
 
-        public CompilationUnit(ResolvedStatement? origin, List<CodePiece> codePieces)
+        public CompilationUnit(ResolvedStatement? statement, List<CodePiece> codePieces)
         {
-            Origin = origin;
+            Statement_Origin = statement;
+            CodePieces = codePieces;
+        }
+
+        public CompilationUnit(TypedExpression? expression, List<CodePiece> codePieces)
+        {
+            Expression_Origin = expression;
             CodePieces = codePieces;
         }
 
@@ -30,8 +38,9 @@ namespace Loon.Compiler.Models._CompilationUnit
         public string GenerateAssembly(CompilationSettings settings, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            if (Origin != null) sb.AppendLine($"; {Origin}");
-            foreach(var codePiece in CodePieces)
+            if (Statement_Origin != null) sb.AppendLine($"; {Statement_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine+";")}");
+            if (Expression_Origin != null) sb.AppendLine($"; {Expression_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine + ";")}");
+            foreach (var codePiece in CodePieces)
             {
                 sb.AppendLine(codePiece.ToString().Indent(indentLevel));
             }

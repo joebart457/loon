@@ -254,7 +254,7 @@ namespace Loon.Analyzer._Analyzer
             var function = GetRegisteredFunction(calleeName, argumentTypes);
             if (function == null) 
                 throw new Exception($"undefined symbol {calleeName}({string.Join(",", argumentTypes)})");
-            return new Models.CallExpression(function, calleeName, arguments);
+            return new Models.CallExpression(function, arguments);
         }
 
         private TypedExpression ResolveGetExpression(Parser.Models.Expressions.GetExpression getExpression)

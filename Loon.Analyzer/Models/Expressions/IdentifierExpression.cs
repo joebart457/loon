@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,11 @@ namespace Loon.Analyzer.Models
             :base(resultingType)
         {
             IdentifierSymbol = identifierSymbol;
+        }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"{IdentifierSymbol.Lexeme}".Indent(indentLevel);
         }
     }
 }

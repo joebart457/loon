@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using Loon.Parser.Models.Expressions;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,20 @@ namespace Loon.Analyzer.Models
             Then = then;
             Else = @else;
         }
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            var sb = new StringBuilder();
+            
+            sb.AppendLine($"if ({Condition.RegenerateCode(0)})");
+            sb.AppendLine(Then.RegenerateCode(indentLevel));
+            if (Else != null)
+            {
+                sb.AppendLine("else".Indent(indentLevel));
+                sb.AppendLine(Else.RegenerateCode(indentLevel));
+            }
+            return sb.ToString();
+        }
 
-        
+
     }
 }

@@ -19,5 +19,10 @@ namespace Loon.Analyzer.Models
             VariableName = variableName;
             InitializerValue = initializerValue;
         }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"var {VariableName} = {InitializerValue.RegenerateCode(0)};";
+        }
     }
 }

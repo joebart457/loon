@@ -17,5 +17,10 @@ namespace Loon.Analyzer.Models
         {
             Expression = expression;
         }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"{Expression.RegenerateCode(indentLevel)};";
+        }
     }
 }

@@ -160,6 +160,7 @@ namespace Loon.Compiler
 
         private void CompileExpression(TypedExpression typedExpression, LocalVariable destination)
         {
+            CompilationState.Add(Templates.Comment(typedExpression));
             if (typedExpression is AssignmentExpression assignmentExpression) CompileAssignment(assignmentExpression, destination);
             if (typedExpression is GetExpression getExpression) CompileGet(getExpression, destination);
             if (typedExpression is CallExpression callExpression) CompileCall(callExpression, destination);

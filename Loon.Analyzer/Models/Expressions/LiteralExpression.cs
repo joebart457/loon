@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,18 @@ namespace Loon.Analyzer.Models
             :base(resultingType)
         {
             Value = value;
+        }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"{ToValueString(Value)}".Indent(indentLevel);
+        }
+
+        private string ToValueString(object value)
+        {
+            if (value.GetType() == typeof(string)) return $"\"{value}\"";
+            if (value.GetType() == typeof(double)) return $"{value}d";
+            return $"{value}";
         }
     }
 }

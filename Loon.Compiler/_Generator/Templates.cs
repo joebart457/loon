@@ -1,5 +1,6 @@
 ﻿using Crater.Shared.Models;
 using Loon.Analyzer._Analyzer;
+using Loon.Analyzer.Models;
 using Loon.Compiler.Extensions;
 using Loon.Compiler.Models._CompilationUnit;
 using Loon.Compiler.Models._Function;
@@ -18,6 +19,12 @@ namespace Loon.Compiler._Generator
         {
             return new CompilationUnit(origin, new());
         }
+
+        public static CompilationUnit Comment(TypedExpression origin)
+        {
+            return new CompilationUnit(origin, new());
+        }
+
         public static CompilationUnit TestCondition(string conditionAddr, out string elseLabel)
         {
             Generator.Label("LOCAL_ELSE", out elseLabel);

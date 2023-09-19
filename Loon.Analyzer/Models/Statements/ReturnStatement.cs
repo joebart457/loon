@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using Loon.Parser.Models.Expressions;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,11 @@ namespace Loon.Analyzer.Models
         public ReturnStatement(TypedExpression returnValue)
         {
             ReturnValue = returnValue;
+        }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"return {ReturnValue.RegenerateCode(0)}".Indent(indentLevel);
         }
     }
 }

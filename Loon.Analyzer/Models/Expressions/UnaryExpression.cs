@@ -1,4 +1,5 @@
 ﻿using Crater.Shared.Models;
+using Loon.Analyzer.Extensions;
 using Loon.Parser.Models.Expressions;
 using Loon.Shared.Enums;
 using System;
@@ -19,6 +20,19 @@ namespace Loon.Analyzer.Models
         {
             Operator = @operator;
             Rhs = rhs;
+        }
+
+        public override string RegenerateCode(int indentLevel = 0)
+        {
+            return $"{RegenerateOperator(Operator)} {Rhs.RegenerateCode(0)}".Indent(indentLevel);
+        }
+
+        private string RegenerateOperator(UnaryOperator @operator)
+        {
+            if (@operator == UnaryOperator.Not) return "!";
+            if (@operator == UnaryOperator.Negate) return "-";
+            if (@operator == UnaryOperator.StringSize) return "$";
+            return "<unknown> ";
         }
     }
 }
