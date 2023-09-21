@@ -66,7 +66,7 @@ namespace Loon.Compiler.Models._Function
 
         private static string ParameterHelper(CrateParameterInfo paramInfo)
         {
-            return $"{paramInfo.Name}:{GetAssemblyParameterType(paramInfo.CrateType)}";
+            return $"{paramInfo.Name.Decorate()}:{GetAssemblyParameterType(paramInfo.CrateType)}";
         }
 
         private static string GetAssemblyParameterType(CrateType type)
@@ -74,6 +74,8 @@ namespace Loon.Compiler.Models._Function
             if (type == BuiltinTypes.Double) return "qword";
             if (type == BuiltinTypes.String) return "dword";
             if (type == BuiltinTypes.Int32) return "dword";
+            if (type == BuiltinTypes.Int16) return "word";
+            if (type == BuiltinTypes.Int8) return "byte";
             if (type.IsReferenceType) return "dword";
             if (!type.IsReferenceType && !type.IsBuiltin) return "dword";
             throw new Exception($"unable to determine local assembly parameter type alias for type {type}");

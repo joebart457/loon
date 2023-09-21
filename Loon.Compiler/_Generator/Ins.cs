@@ -9,7 +9,14 @@ namespace Loon.Compiler._Generator
 {
     internal enum Register
     {
+        al,
+        bl,
+        cl,
+        dl,
         ax,
+        bx,
+        cx,
+        dx,
         eax,
         ebx,
         ecx,
@@ -24,6 +31,8 @@ namespace Loon.Compiler._Generator
         {
             Repr = repr;
         }
+        public static Size BYTE(string addr) => new Size($"byte [{addr}]");
+        public static Size WORD(string addr) => new Size($"word [{addr}]");
         public static Size DWORD(string addr) => new Size($"dword [{addr}]");
         public static Size DWORD(int immediateValue) => new Size($"dword {immediateValue}");
         public static Size QWORD(string addr) => new Size($"qword [{addr}]");
@@ -36,7 +45,7 @@ namespace Loon.Compiler._Generator
         {
             Repr = repr;
         }
-        public static Offset Create(string addr, int offset) => new Offset($"dword [{addr}+{offset}]");
+        public static Offset CreateForDWORD(string addr, int offset) => new Offset($"dword [{addr}+{offset}]");
     }
 
 
@@ -107,6 +116,16 @@ namespace Loon.Compiler._Generator
             return $"mov {dest.Repr}, {source}";
         }
 
+        public static string MOVSX(Register dest, Size source)
+        {
+            return $"movsx {dest}, {source.Repr}";
+        }
+
+        public static string XOR(Register dest, Register source)
+        {
+            return $"xor {dest}, {source}";
+        }
+
         public static string PUSH(Register register)
         {
             return $"push {register}";
@@ -146,17 +165,44 @@ namespace Loon.Compiler._Generator
         {
             return $"add {dest}, {source.Repr}";
         }
+
+        public static string ADD(Register dest, Register source)
+        {
+            return $"add {dest}, {source}";
+        }
+
         public static string SUB(Register dest, Size source)
         {
             return $"sub {dest}, {source.Repr}";
         }
+
+        public static string SUB(Register dest, Register source)
+        {
+            return $"sub {dest}, {source}";
+        }
+
         public static string MUL(Register dest, Size source)
         {
             return $"mul {dest}, {source.Repr}";
         }
+        public static string IMUL(Register dest, Size source)
+        {
+            return $"imul {dest}, {source.Repr}";
+        }
+
+        public static string IMUL(Register dest, Register source)
+        {
+            return $"imul {dest}, {source}";
+        }
+
         public static string DIV(Register dest, Size source)
         {
             return $"div {dest}, {source.Repr}";
+        }
+
+        public static string IDIV(Register source)
+        {
+            return $"idiv {source}";
         }
 
         public static string FILD(Size operand)

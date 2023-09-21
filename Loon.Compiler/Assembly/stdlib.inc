@@ -153,3 +153,14 @@ proc CopyMemory stdcall uses eax,ebx,ecx,edx, dest:dword, src:dword, nBytes:dwor
 	xor edx, edx
 	ret
 endp
+
+
+proc to_byte_from_dword stdcall src:dword
+	mov eax, dword [src]
+	ret
+endp
+
+proc to_byte_from_word stdcall src:dword
+	movsx eax, word [src]
+	ret
+endp

@@ -25,6 +25,16 @@ namespace Loon.Compiler._Generator
             return new CompilationUnit(origin, new());
         }
 
+        public static CompilationUnit InlineAssembly(string asm)
+        {
+            var cu = new CompilationUnit();
+            asm.Split("\r\n").ToList().ForEach(line =>
+            {
+                cu.Append(line.TrimStart());
+            });
+            return cu;
+        }
+
         public static CompilationUnit TestCondition(string conditionAddr, out string elseLabel)
         {
             Generator.Label("LOCAL_ELSE", out elseLabel);
@@ -62,7 +72,23 @@ namespace Loon.Compiler._Generator
             return new CompilationUnit()
                 .Append(Ins.MOV(Register.edx, Size.DWORD(0)))
                 .Append(Ins.MOV(Register.eax, Size.DWORD(returnAlias)))
-                .Append(Ins.MOV(Register.ebx, Offset.Create(returnAlias, 4)))
+                .Append(Ins.MOV(Register.ebx, Offset.CreateForDWORD(returnAlias, 4)))
+                .Append(Ins.RET());
+        }
+
+        public static CompilationUnit Returnb(string returnAlias)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.edx, Size.DWORD(0)))
+                .Append(Ins.MOVSX(Register.eax, Size.BYTE(returnAlias)))
+                .Append(Ins.RET());
+        }
+
+        public static CompilationUnit Returnw(string returnAlias)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.edx, Size.DWORD(0)))
+                .Append(Ins.MOVSX(Register.eax, Size.WORD(returnAlias)))
                 .Append(Ins.RET());
         }
 
@@ -116,11 +142,25 @@ namespace Loon.Compiler._Generator
         public static CompilationUnit Movq(string destAddr, string sourceAddr)
         {
             return new CompilationUnit()
-                .Append(Ins.MOV(Register.eax, Offset.Create(sourceAddr, 4)))
-                .Append(Ins.MOV(Offset.Create(destAddr, 4), Register.eax))
+                .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD(sourceAddr, 4)))
+                .Append(Ins.MOV(Offset.CreateForDWORD(destAddr, 4), Register.eax))
                 .Append(Ins.MOV(Register.eax, Size.DWORD(sourceAddr)))
                 .Append(Ins.MOV(Size.DWORD(destAddr), Register.eax));
 
+        }
+
+        public static CompilationUnit Movb(string destAddr, string sourceAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.BYTE(sourceAddr)))
+                .Append(Ins.MOV(destAddr, Register.al));
+        }
+
+        public static CompilationUnit Movw(string destAddr, string sourceAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.WORD(sourceAddr)))
+                .Append(Ins.MOV(destAddr, Register.ax));
         }
 
 
@@ -148,10 +188,38 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.VirtualAt(Register.ebx))
                 .Append($"\t{instanceAlias} {instanceType.Name}")
                 .Append(Ins.EndVirtual())
-                .Append(Ins.MOV(Register.eax, Offset.Create(valueToAssignAddr, 4)))
-                .Append(Ins.MOV(Offset.Create($"{instanceAlias}.{field.Name}", 4), Register.eax))
+                .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD(valueToAssignAddr, 4)))
+                .Append(Ins.MOV(Offset.CreateForDWORD($"{instanceAlias}.{field.Name}", 4), Register.eax))
                 .Append(Ins.MOV(Register.eax, Size.DWORD(valueToAssignAddr)))
                 .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.eax));
+        }
+
+        public static CompilationUnit AssignMemberb(string instanceAddr, CrateType instanceType, CrateFieldInfo field, string valueToAssignAddr)
+        {
+            Generator.UniqueTypeIdentifier(instanceType, out var instanceAlias);
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.ebx, Size.DWORD(instanceAddr)))
+                .Append(Ins.TEST(Register.ebx, Register.ebx))
+                .Append(Ins.JZ("FAIL_NULL_PTR"))
+                .Append(Ins.VirtualAt(Register.ebx))
+                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append(Ins.EndVirtual())
+                .Append(Ins.MOV(Register.al, valueToAssignAddr))
+                .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.al));
+        }
+
+        public static CompilationUnit AssignMemberw(string instanceAddr, CrateType instanceType, CrateFieldInfo field, string valueToAssignAddr)
+        {
+            Generator.UniqueTypeIdentifier(instanceType, out var instanceAlias);
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.ebx, Size.DWORD(instanceAddr)))
+                .Append(Ins.TEST(Register.ebx, Register.ebx))
+                .Append(Ins.JZ("FAIL_NULL_PTR"))
+                .Append(Ins.VirtualAt(Register.ebx))
+                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append(Ins.EndVirtual())
+                .Append(Ins.MOV(Register.ax, valueToAssignAddr))
+                .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.ax));
         }
 
         public static CompilationUnit AssignMemberStruct(string instanceAddr, CrateType instanceType, CrateFieldInfo field, string valueToAssignAddr)
@@ -188,9 +256,19 @@ namespace Loon.Compiler._Generator
             {
                 unit.Append(Ins.MOV(Register.eax, $"{instanceAlias}.{field.Name}"))
                     .Append(Ins.MOV(destAddr, Register.eax))
-                    .Append(Ins.MOV(Register.eax, Offset.Create($"{instanceAlias}.{field.Name}", 4)))
-                    .Append(Ins.MOV(Offset.Create(destAddr, 4), Register.eax));
-            } 
+                    .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD($"{instanceAlias}.{field.Name}", 4)))
+                    .Append(Ins.MOV(Offset.CreateForDWORD(destAddr, 4), Register.eax));
+            }
+            if (field.CrateType == BuiltinTypes.Int8)
+            {
+                unit.Append(Ins.MOV(Register.al, $"{instanceAlias}.{field.Name}"))
+                    .Append(Ins.MOV(destAddr, Register.al));
+            }
+            if (field.CrateType == BuiltinTypes.Int8)
+            {
+                unit.Append(Ins.MOV(Register.ax, $"{instanceAlias}.{field.Name}"))
+                    .Append(Ins.MOV(destAddr, Register.ax));
+            }
             else if (!field.CrateType.IsBuiltin && !field.CrateType.IsReferenceType)
             {
                 unit.Append(Ins.LEA(Register.eax, $"{instanceAlias}.{field.Name}"))
@@ -254,7 +332,7 @@ namespace Loon.Compiler._Generator
             {
                 return new CompilationUnit()
                     .Append(Ins.MOV(Size.DWORD(destAddr), Register.eax))
-                    .Append(Ins.MOV(Offset.Create(destAddr, 4), Register.ebx));
+                    .Append(Ins.MOV(Offset.CreateForDWORD(destAddr, 4), Register.ebx));
             }
             else if (function.CallingConvention == CallingConvention.CInvoke)
             {
@@ -265,6 +343,46 @@ namespace Loon.Compiler._Generator
             {
                 return new CompilationUnit()
                     .Append(Ins.FSTP(Size.QWORD(destAddr))); // does this work?
+            }
+            throw new Exception($"unsupported calling convention {function.CallingConvention}");
+        }
+
+        public static CompilationUnit FinishCallb(CrateFunction function, string destAddr)
+        {
+            if (function.CallingConvention == CallingConvention.StdCall)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.al));
+            }
+            else if (function.CallingConvention == CallingConvention.CInvoke)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.al));
+            }
+            else if (function.CallingConvention == CallingConvention.Invoke)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.al));
+            }
+            throw new Exception($"unsupported calling convention {function.CallingConvention}");
+        }
+
+        public static CompilationUnit FinishCallw(CrateFunction function, string destAddr)
+        {
+            if (function.CallingConvention == CallingConvention.StdCall)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.ax));
+            }
+            else if (function.CallingConvention == CallingConvention.CInvoke)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.ax));
+            }
+            else if (function.CallingConvention == CallingConvention.Invoke)
+            {
+                return new CompilationUnit()
+                    .Append(Ins.MOV(destAddr, Register.ax));
             }
             throw new Exception($"unsupported calling convention {function.CallingConvention}");
         }
@@ -335,6 +453,48 @@ namespace Loon.Compiler._Generator
 
 
         #region BinaryOperations
+        public static CompilationUnit Convert_Int8_Int32(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.BYTE(sourceAddr)))
+                .Append(Ins.MOV(destAddr, Register.eax));
+        }
+
+        public static CompilationUnit Convert_Int8_Int16(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.ax, Size.BYTE(sourceAddr)))
+                .Append(Ins.MOV(destAddr, Register.ax));
+        }
+
+        public static CompilationUnit Convert_Int16_Int32(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.WORD(sourceAddr)))
+                .Append(Ins.MOV(destAddr, Register.eax));
+        }
+
+        public static CompilationUnit Convert_Int16_Int8(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.ax, sourceAddr))
+                .Append(Ins.MOV(destAddr, Register.al));
+        }
+
+        public static CompilationUnit Convert_Int32_Int16(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.eax, sourceAddr))
+                .Append(Ins.MOV(destAddr, Register.ax));
+        }
+
+        public static CompilationUnit Convert_Int32_Int8(string sourceAddr, string destAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.eax, sourceAddr))
+                .Append(Ins.MOV(destAddr, Register.al));
+        }
+
 
         public static CompilationUnit Add_Int32_Int32(string lhsAddr, string rhsAddr, string destAddr)
         {
@@ -354,7 +514,7 @@ namespace Loon.Compiler._Generator
         {
             return new CompilationUnit()
                 .Append(Ins.MOV(Register.ebx, lhsAddr))
-                .Append(Ins.MUL(Register.ebx, Size.DWORD(rhsAddr)))
+                .Append(Ins.IMUL(Register.ebx, Size.DWORD(rhsAddr)))
                 .Append(Ins.MOV(destAddr, Register.ebx));
         }
         public static CompilationUnit Div_Int32_Int32(string lhsAddr, string rhsAddr, string destAddr)
@@ -363,8 +523,10 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.MOV(Register.ebx, rhsAddr))
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_DIVISION_BY_ZERO"))
-                .Append(Ins.DIV(Register.ebx, Size.DWORD(rhsAddr)))
-                .Append(Ins.MOV(destAddr, Register.ebx));
+                .Append(Ins.MOV(Register.eax, Size.DWORD(lhsAddr)))
+                .Append(Ins.XOR(Register.edx, Register.edx))
+                .Append(Ins.IDIV(Register.ebx))
+                .Append(Ins.MOV(destAddr, Register.eax));
         }
 
         public static CompilationUnit Add_Int32_Double(string lhsAddr, string rhsAddr, string destAddr)
@@ -472,11 +634,97 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.FSTP(Size.QWORD(destAddr)));
         }
 
+        public static CompilationUnit Cmp_Int8_Int8(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.al, lhsAddr))
+                .Append(Ins.MOV(Register.bl, rhsAddr))
+                .Append(Ins.CMP(Register.al, Register.bl));
+        }
+
+        public static CompilationUnit Cmp_Int8_Int16(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.ax, Size.BYTE(lhsAddr)))
+                .Append(Ins.MOV(Register.bx, rhsAddr))
+                .Append(Ins.CMP(Register.ax, Register.bx));
+        }
+
+        public static CompilationUnit Cmp_Int8_Int32(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.BYTE(lhsAddr)))
+                .Append(Ins.MOV(Register.ebx, rhsAddr))
+                .Append(Ins.CMP(Register.eax, Register.ebx));
+        }
+
+        public static CompilationUnit Cmp_Int8_Double(string lhsAddr, string rhsAddr, out LocalVariable producedLocal)
+        {
+            Generator.LocalVariable(BuiltinTypes.Int16, out producedLocal);
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.ax, Size.WORD(lhsAddr)))
+                .Append(Ins.FILD(Size.WORD(producedLocal.Symbol)))
+                .Append(Ins.FLD(Size.QWORD(rhsAddr)))
+                .Append(Ins.FCOMPP())
+                .Append(Ins.FSTSW(Register.ax))
+                .Append(Ins.FCLEX());
+        }
+
+        public static CompilationUnit Cmp_Int16_Int16(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.ax, lhsAddr))
+                .Append(Ins.MOV(Register.bx, rhsAddr))
+                .Append(Ins.CMP(Register.ax, Register.bx));
+        }
+
+        public static CompilationUnit Cmp_Int16_Int8(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.ax, lhsAddr))
+                .Append(Ins.MOVSX(Register.bx, Size.BYTE(rhsAddr)))
+                .Append(Ins.CMP(Register.eax, Register.ebx));
+        }
+
+        public static CompilationUnit Cmp_Int16_Int32(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.eax, Size.WORD(lhsAddr)))
+                .Append(Ins.MOV(Register.ebx, rhsAddr))
+                .Append(Ins.CMP(Register.eax, Register.ebx));
+        }
+
+        public static CompilationUnit Cmp_Int16_Double(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.FILD(Size.WORD(lhsAddr)))
+                .Append(Ins.FLD(Size.QWORD(rhsAddr)))
+                .Append(Ins.FCOMPP())
+                .Append(Ins.FSTSW(Register.ax))
+                .Append(Ins.FCLEX());
+        }
+
         public static CompilationUnit Cmp_Int32_Int32(string lhsAddr, string rhsAddr)
         {
             return new CompilationUnit()
                 .Append(Ins.MOV(Register.eax, lhsAddr))
                 .Append(Ins.MOV(Register.ebx, rhsAddr))
+                .Append(Ins.CMP(Register.eax, Register.ebx));
+        }
+
+        public static CompilationUnit Cmp_Int32_Int8(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.eax, lhsAddr))
+                .Append(Ins.MOVSX(Register.ebx, Size.BYTE(rhsAddr)))
+                .Append(Ins.CMP(Register.eax, Register.ebx));
+        }
+
+        public static CompilationUnit Cmp_Int32_Int16(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.eax, lhsAddr))
+                .Append(Ins.MOVSX(Register.ebx, Size.WORD(rhsAddr)))
                 .Append(Ins.CMP(Register.eax, Register.ebx));
         }
 
@@ -495,6 +743,29 @@ namespace Loon.Compiler._Generator
             return new CompilationUnit()
                 .Append(Ins.FLD(Size.QWORD(lhsAddr)))
                 .Append(Ins.FLD(Size.QWORD(rhsAddr)))
+                .Append(Ins.FCOMPP())
+                .Append(Ins.FSTSW(Register.ax))
+                .Append(Ins.FCLEX());
+        }
+
+        public static CompilationUnit Cmp_Double_Int8(string lhsAddr, string rhsAddr, out LocalVariable producedLocal)
+        {
+            Generator.LocalVariable(BuiltinTypes.Int16, out producedLocal);
+            return new CompilationUnit()
+                .Append(Ins.MOVSX(Register.ax, Size.BYTE(rhsAddr)))
+                .Append(Ins.MOV(producedLocal.Symbol, Register.ax))
+                .Append(Ins.FLD(Size.QWORD(lhsAddr)))
+                .Append(Ins.FILD(Size.WORD(rhsAddr)))
+                .Append(Ins.FCOMPP())
+                .Append(Ins.FSTSW(Register.ax))
+                .Append(Ins.FCLEX());
+        }
+
+        public static CompilationUnit Cmp_Double_Int16(string lhsAddr, string rhsAddr)
+        {
+            return new CompilationUnit()
+                .Append(Ins.FLD(Size.QWORD(lhsAddr)))
+                .Append(Ins.FILD(Size.WORD(rhsAddr)))
                 .Append(Ins.FCOMPP())
                 .Append(Ins.FSTSW(Register.ax))
                 .Append(Ins.FCLEX());
@@ -573,6 +844,8 @@ namespace Loon.Compiler._Generator
             //if (type == BuiltinTypes.Double) return $"qword [{argAddr}]"; //only available for 64 bit
             if (type == BuiltinTypes.Double) return $"dword [{argAddr}], dword [{argAddr}+4]";
             if (!type.IsBuiltin && !type.IsReferenceType) return argAddr;
+            if (type == BuiltinTypes.Int8) return $"dword [{argAddr}]";
+            if (type == BuiltinTypes.Int16) return $"dword [{argAddr}]";
             return $"dword [{argAddr}]";
         }
 

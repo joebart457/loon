@@ -28,6 +28,8 @@ namespace Loon.Compiler.Models._Function
 
         private static string GetLocalVariableType(CrateType type)
         {
+            if (type == BuiltinTypes.Int8) return "BYTE";
+            if (type == BuiltinTypes.Int16) return "WORD";
             if (type == BuiltinTypes.Double) return "QWORD";
             if (type == BuiltinTypes.String) return "DWORD";
             if (type == BuiltinTypes.Int32) return "DWORD";

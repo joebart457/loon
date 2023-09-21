@@ -19,7 +19,7 @@ namespace Loon.Compiler.Extensions
             foreach(var group in grouped)
             {
                 sb.AppendLine($"import {group.Key.LibraryAlias}, \\".Indent(indentLevel));
-                sb.AppendLine(string.Join(", \\\r\n", group.Select(ffi => $"{ffi.FunctionAlias}, '{ffi.FunctionAlias}'".Indent(indentLevel+1))));
+                sb.AppendLine(string.Join(", \\\r\n", group.Select(ffi => $"{ffi.FunctionName}, '{ffi.FunctionAlias}'".Indent(indentLevel+1))));
             }
             return sb.ToString();
         }

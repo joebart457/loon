@@ -22,7 +22,7 @@ namespace Loon.Compiler._Generator
             }
             _uniqueIndeces[type.Name] = index;
 
-            return $"{type.Name}_{index}";
+            return $"!!{type.Name}_{index}";
         }
 
         public static string UniqueTypeIdentifier(CrateType type, out string identifier)

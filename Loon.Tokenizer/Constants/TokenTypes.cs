@@ -20,10 +20,18 @@ namespace Loon.Tokenizer.Constants
         public const string SemiColon = "SemiColon";
         public const string Comma = "Comma";
 
+        public const string InlineAssembly = "InlineAssembly";
+
+        public const string I8 = "I8";
+        public const string I16 = "I16";
+        public const string I32 = "I32";
+
         public const string If = "If";
         public const string Else = "Else";
         public const string Return = "Return";
         public const string Var = "Var";
+        public const string While = "While";
+        public const string For = "For";
         public const string True = "True";
         public const string False = "False";
         public const string Create = "Create";

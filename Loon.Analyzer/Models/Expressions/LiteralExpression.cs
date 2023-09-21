@@ -26,7 +26,7 @@ namespace Loon.Analyzer.Models
 
         private string ToValueString(object value)
         {
-            if (value.GetType() == typeof(string)) return $"\"{value}\"";
+            if (value.GetType() == typeof(string)) return $"\"{value}\"".Replace("\r", "\\r").Replace("\n", "\\n");
             if (value.GetType() == typeof(double)) return $"{value}d";
             return $"{value}";
         }

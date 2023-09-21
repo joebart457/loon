@@ -156,7 +156,28 @@ namespace Loon.Analyzer._Analyzer
             if (statement is Parser.Models.Statements.VariableDeclarationStatement variableDeclarationStatement) return ResolveVariableDeclarationStatement(variableDeclarationStatement);
             if (statement is Parser.Models.Statements.ExpressionStatement expressionStatement) return ResolveExpressionStatement(expressionStatement);
             if (statement is Parser.Models.Statements.BlockStatement blockStatement) return ResolveBlockStatement(blockStatement);
+            if (statement is Parser.Models.Statements.WhileStatement whileStatement) return ResolveWhileStatement(whileStatement);
+            if (statement is Parser.Models.Statements.ForStatement forStatement) return ResolveForStatement(forStatement);
+            if (statement is Parser.Models.Statements.InlineAssemblyStatement inlineAssemblyStatement) return new Models.InlineAssemblyStatement(inlineAssemblyStatement.Asm);
             throw new Exception($"unsupported statement type {statement}");
+        }
+
+        private ResolvedStatement ResolveWhileStatement(Parser.Models.Statements.WhileStatement whileStatement)
+        {
+            var condition = ResolveExpression(whileStatement.Condition);
+            if (!IsTruthyType(condition.Type)) throw new Exception($"type {condition.Type} is not able to be evaluated for truthiness");
+            var then = ResolveStatement(whileStatement.Then);
+            return new Models.WhileStatement(condition, then);
+        }
+
+        private ResolvedStatement ResolveForStatement(Parser.Models.Statements.ForStatement forStatement)
+        {
+            ResolvedStatement? intializer = forStatement.Initializer == null? null : ResolveStatement(forStatement.Initializer);
+            TypedExpression? condition = forStatement.Condition == null? null : ResolveExpression(forStatement.Condition);
+            TypedExpression? iterator = forStatement.Iterator == null ? null : ResolveExpression(forStatement.Iterator);
+            if (condition != null && !IsTruthyType(condition.Type)) throw new Exception($"type {condition.Type} is not able to be evaluated for truthiness");
+            var then = ResolveStatement(forStatement.Then);
+            return new Models.ForStatement(intializer, condition, iterator, then);
         }
 
         private ResolvedStatement ResolveBlockStatement(Parser.Models.Statements.BlockStatement blockStatement)
@@ -273,6 +294,8 @@ namespace Loon.Analyzer._Analyzer
 
         private TypedExpression ResolveLiteralExpression(Parser.Models.Expressions.LiteralExpression literalExpression)
         {
+            if (literalExpression.Value.GetType() == typeof(byte)) return new Models.LiteralExpression(BuiltinTypes.Int8, literalExpression.Value);
+            if (literalExpression.Value.GetType() == typeof(short)) return new Models.LiteralExpression(BuiltinTypes.Int16, literalExpression.Value);
             if (literalExpression.Value.GetType() == typeof(int)) return new Models.LiteralExpression(BuiltinTypes.Int32, literalExpression.Value);
             if (literalExpression.Value.GetType() == typeof(double)) return new Models.LiteralExpression(BuiltinTypes.Double, literalExpression.Value);
             if (literalExpression.Value.GetType() == typeof(string)) return new Models.LiteralExpression(BuiltinTypes.String, literalExpression.Value);
@@ -321,6 +344,8 @@ namespace Loon.Analyzer._Analyzer
 
         private void RegisterBuiltinTypes()
         {
+            _registeredTypes.Add("int8", BuiltinTypes.Int8);
+            _registeredTypes.Add("int16", BuiltinTypes.Int16);
             _registeredTypes.Add("int32", BuiltinTypes.Int32);
             _registeredTypes.Add("string", BuiltinTypes.String);
             _registeredTypes.Add("double", BuiltinTypes.Double);
@@ -367,7 +392,7 @@ namespace Loon.Analyzer._Analyzer
 
         private bool IsTruthyType(CrateType type)
         {
-            if (type.IsBuiltin && type.Name == "int32") return true;
+            if (type == BuiltinTypes.Int32) return true;
             return false;
         }
 
@@ -385,15 +410,15 @@ namespace Loon.Analyzer._Analyzer
             }
             if (op == BinaryOperator.And || op == BinaryOperator.Or)
             {
-                if (lhs.Name == "int32" && rhs.Name == "int32") return BuiltinTypes.Int32;
+                if (lhs == BuiltinTypes.Int32 && rhs == BuiltinTypes.Int32) return BuiltinTypes.Int32;
                 return null;
             }
             if (op == BinaryOperator.Add || op == BinaryOperator.Subtract || op == BinaryOperator.Multiply || op == BinaryOperator.Divide)
             {
                 if (lhs.IsNumeric && rhs.IsNumeric)
                 {
-                    if (rhs.Name == "double" || lhs.Name == "double") return BuiltinTypes.Double;
-                    return BuiltinTypes.Int32;
+                    if (rhs == BuiltinTypes.Double || lhs == BuiltinTypes.Double) return BuiltinTypes.Double;
+                    return BuiltinTypes.Int32; // Arithmetic operations are promoted to Int32, then can be later cast down
                 }
                 if (op == BinaryOperator.Add && lhs == BuiltinTypes.String && rhs == BuiltinTypes.String) return BuiltinTypes.String;
                 return null;
@@ -422,6 +447,7 @@ namespace Loon.Analyzer._Analyzer
             return null;
         }
 
+
     }
 
 
@@ -440,6 +466,8 @@ namespace Loon.Analyzer._Analyzer
 
     public static class BuiltinTypes
     {
+        public static CrateType Int8 = new BuiltinType("int8", true);
+        public static CrateType Int16 = new BuiltinType("int16", true);
         public static CrateType Int32 = new BuiltinType("int32", true);
         public static CrateType String = new BuiltinType("string");
         public static CrateType Double = new BuiltinType("double", true);

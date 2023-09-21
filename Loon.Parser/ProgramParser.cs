@@ -20,7 +20,7 @@ namespace Loon.Parser
         public IEnumerable<DeclarationBase> ParseFile(string path)
         {
             var tokenizer = Tokenizers.Default;
-            var tokens = tokenizer.Tokenize(File.ReadAllText(path))
+            var tokens = tokenizer.Tokenize(File.ReadAllText(path), false)
                 .Where(token => token.Type != BuiltinTokenTypes.EndOfFile)
                 .ToList();
             Initialize(tokens);
@@ -129,8 +129,38 @@ namespace Loon.Parser
             if (AdvanceIfMatch(TokenTypes.If)) return ParseIfStatement();
             if (AdvanceIfMatch(TokenTypes.Return)) return ParseReturnStatement();
             if (AdvanceIfMatch(TokenTypes.Var)) return ParseVariableDeclarationStatement();
+            if (AdvanceIfMatch(TokenTypes.For)) return ParseForStatement();
+            if (AdvanceIfMatch(TokenTypes.While)) return ParseWhileStatement();
             if (AdvanceIfMatch(TokenTypes.LCurly)) return ParseBlockStatement();
+            if (AdvanceIfMatch(TokenTypes.InlineAssembly)) return new InlineAssemblyStatement(Previous().Lexeme);
             return ParseExpressionStatement();
+        }
+
+        private StatementBase ParseWhileStatement()
+        {
+            Consume(TokenTypes.LParen, "expect (condition) in while loop");
+            var condition = ParseExpression();
+            Consume(TokenTypes.RParen, "expect enclosing ) in while statement loop");
+            var then = ParseStatement();
+            return new WhileStatement(condition, then);
+        }
+
+        private StatementBase ParseForStatement()
+        {
+            Consume(TokenTypes.LParen, "expect (<initializer>;<condition>;<iter>) in for loop");
+            StatementBase? initializer = null;
+            ExpressionBase? condition = null;
+            ExpressionBase? iterator = null;
+            if (!AdvanceIfMatch(TokenTypes.SemiColon)) initializer = ParseStatement();
+            if (!AdvanceIfMatch(TokenTypes.SemiColon))
+            {
+                condition = ParseExpression();
+                Consume(TokenTypes.SemiColon, "expect ; after for loop condition");
+            }
+            if (!AdvanceIfMatch(TokenTypes.SemiColon)) iterator = ParseExpression();
+            Consume(TokenTypes.RParen, "expect enclosing ) in for loop");
+            var then = ParseStatement();
+            return new ForStatement(initializer, condition, iterator, then);
         }
 
         private StatementBase ParseBlockStatement()
@@ -315,7 +345,11 @@ namespace Loon.Parser
             }
             if (AdvanceIfMatch(BuiltinTokenTypes.Integer))
             {
-                return new LiteralExpression(int.Parse(Previous().Lexeme, DefaultNumberFormat));
+                var previousLexeme = Previous().Lexeme;
+                if (AdvanceIfMatch(TokenTypes.I8)) return new LiteralExpression(byte.Parse(previousLexeme, DefaultNumberFormat));
+                if (AdvanceIfMatch(TokenTypes.I16)) return new LiteralExpression(short.Parse(previousLexeme, DefaultNumberFormat));
+                if (AdvanceIfMatch(TokenTypes.I32)) return new LiteralExpression(int.Parse(previousLexeme, DefaultNumberFormat));
+                return new LiteralExpression(int.Parse(previousLexeme, DefaultNumberFormat));
             }
             if (AdvanceIfMatch(BuiltinTokenTypes.Double))
             {

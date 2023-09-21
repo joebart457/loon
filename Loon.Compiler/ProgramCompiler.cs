@@ -100,7 +100,15 @@ namespace Loon.Compiler
             else if (statement is ReturnStatement returnStatement) CompileReturnStatement(returnStatement);
             else if (statement is VariableDeclarationStatement variableDeclarationStatement) CompileVariableDeclarationStatement(variableDeclarationStatement);
             else if (statement is BlockStatement blockStatement) CompileBlockStatement(blockStatement);
+            else if (statement is WhileStatement whileStatement) CompileWhileStatement(whileStatement);
+            else if (statement is ForStatement forStatement) CompileForStatement(forStatement);
+            else if (statement is InlineAssemblyStatement inlineAssemblyStatement) CompileInlineAssemblyStatement(inlineAssemblyStatement);
             else throw new Exception($"unsupported statement type {statement.GetType().Name}");
+        }
+
+        private void CompileInlineAssemblyStatement(InlineAssemblyStatement inlineAssemblyStatement)
+        {
+            CompilationState.Add(Templates.InlineAssembly(inlineAssemblyStatement.Asm));
         }
 
         private void CompileExpressionStatement(ExpressionStatement expressionStatement)
@@ -126,12 +134,45 @@ namespace Loon.Compiler
             {
                 CompileStatement(statement);
             }
+        }
 
+        private void CompileWhileStatement(WhileStatement whileStatement)
+        {
+            CompilationState.Add(Generator.LocalVariable(BuiltinTypes.Int32, out var conditionLocal));
+            CompilationState.Add(Templates.Label(Generator.Label("while_start", out var loopStart)));
+            Generator.Label("while_end", out var loopEnd);
+            CompileExpression(whileStatement.Condition, conditionLocal);
+            CompilationState.Add(Templates.Jz(loopEnd));
+            CompileStatement(whileStatement.Then);
+            CompilationState.Add(Templates.Jmp(loopStart));
+            CompilationState.Add(Templates.Label(loopEnd));
+        }
+
+        private void CompileForStatement(ForStatement forStatement)
+        {
+            if (forStatement.Initializer != null) CompileStatement(forStatement.Initializer);
+            CompilationState.Add(Templates.Label(Generator.Label("loop_start", out var loopStart)));
+            Generator.Label("loop_end", out var loopEnd);
+            if (forStatement.Condition != null)
+            {
+                CompilationState.Add(Generator.LocalVariable(BuiltinTypes.Int32, out var conditionLocal));
+                CompileExpression(forStatement.Condition, conditionLocal);
+                CompilationState.Add(Templates.Jz(loopEnd));
+
+            }
+            CompileStatement(forStatement.Then);
+            if (forStatement.Iterator != null)
+            {
+                CompilationState.Add(Generator.LocalVariable(forStatement.Iterator.Type, true, out var discardAlias));
+                CompileExpression(forStatement.Iterator, discardAlias);
+            }
+            CompilationState.Add(Templates.Jmp(loopStart));
+            CompilationState.Add(Templates.Label(loopEnd));
         }
 
         private void CompileVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement)
         {
-            CompilationState.Add(Generator.LocalVariable(variableDeclarationStatement.InitializerValue.Type, variableDeclarationStatement.VariableName, out var destination));
+            CompilationState.Add(Generator.LocalVariable(variableDeclarationStatement.InitializerValue.Type, variableDeclarationStatement.VariableName.Decorate(), out var destination));
             CompileExpression(variableDeclarationStatement.InitializerValue, destination);
         }
 
@@ -146,6 +187,14 @@ namespace Loon.Compiler
             else if (returnStatement.ReturnValue.Type == BuiltinTypes.String)
             {
                 CompilationState.Add(Templates.Return(returnAlias.Symbol));
+            }
+            else if (returnStatement.ReturnValue.Type == BuiltinTypes.Int8)
+            {
+                CompilationState.Add(Templates.Returnb(returnAlias.Symbol));
+            }
+            else if (returnStatement.ReturnValue.Type == BuiltinTypes.Int16)
+            {
+                CompilationState.Add(Templates.Returnw(returnAlias.Symbol));
             }
             else if (returnStatement.ReturnValue.Type == BuiltinTypes.Int32)
             {
@@ -185,6 +234,16 @@ namespace Loon.Compiler
                     CompilationState.Add(Templates.AssignMemberq(instanceAddr.Symbol, assignmentExpression.InstanceTarget.Type, assignmentExpression.AssignmentTarget, valueToAssignAlias.Symbol));
                     if (!destination.IsDiscard) CompilationState.Add(Templates.Movq(destination.Symbol, valueToAssignAlias.Symbol));
                 }
+                else if (assignmentExpression.Type == BuiltinTypes.Int8)
+                {
+                    CompilationState.Add(Templates.AssignMemberb(instanceAddr.Symbol, assignmentExpression.InstanceTarget.Type, assignmentExpression.AssignmentTarget, valueToAssignAlias.Symbol));
+                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movb(destination.Symbol, valueToAssignAlias.Symbol));
+                }
+                else if (assignmentExpression.Type == BuiltinTypes.Int16)
+                {
+                    CompilationState.Add(Templates.AssignMemberw(instanceAddr.Symbol, assignmentExpression.InstanceTarget.Type, assignmentExpression.AssignmentTarget, valueToAssignAlias.Symbol));
+                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movw(destination.Symbol, valueToAssignAlias.Symbol));
+                }
                 else if (assignmentExpression.Type == BuiltinTypes.Int32)
                 {
                     CompilationState.Add(Templates.AssignMember(instanceAddr.Symbol, assignmentExpression.InstanceTarget.Type, assignmentExpression.AssignmentTarget, valueToAssignAlias.Symbol));
@@ -210,19 +269,29 @@ namespace Loon.Compiler
             {
                 if (assignmentExpression.Type == BuiltinTypes.Double)
                 {
-                    CompilationState.Add(Templates.Movq(assignmentExpression.AssignmentTarget.Name, valueToAssignAlias.Symbol));
-                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movq(destination.Symbol, assignmentExpression.AssignmentTarget.Name));
+                    CompilationState.Add(Templates.Movq(assignmentExpression.AssignmentTarget.Name.Decorate(), valueToAssignAlias.Symbol));
+                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movq(destination.Symbol, assignmentExpression.AssignmentTarget.Name.Decorate()));
+                }
+                else if (assignmentExpression.Type == BuiltinTypes.Int8)
+                {
+                    CompilationState.Add(Templates.Movb(assignmentExpression.AssignmentTarget.Name.Decorate(), valueToAssignAlias.Symbol));
+                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movb(destination.Symbol, valueToAssignAlias.Symbol));
+                }
+                else if (assignmentExpression.Type == BuiltinTypes.Int16)
+                {
+                    CompilationState.Add(Templates.Movw(assignmentExpression.AssignmentTarget.Name.Decorate(), valueToAssignAlias.Symbol));
+                    if (!destination.IsDiscard) CompilationState.Add(Templates.Movw(destination.Symbol, valueToAssignAlias.Symbol));
                 }
                 else if (assignmentExpression.Type == BuiltinTypes.Int32)
                 {
                     CompilationState.Add(Templates.Mov(Register.eax, valueToAssignAlias.Symbol));
-                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name, Register.eax));
+                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name.Decorate(), Register.eax));
                     if (!destination.IsDiscard) CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
                 }
                 else if (assignmentExpression.Type == BuiltinTypes.String)
                 {
                     CompilationState.Add(Templates.Mov(Register.eax, valueToAssignAlias.Symbol));
-                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name, Register.eax));
+                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name.Decorate(), Register.eax));
                     if (!destination.IsDiscard) CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
                 }
                 else if (!assignmentExpression.Type.IsBuiltin && !assignmentExpression.Type.IsReferenceType)
@@ -232,7 +301,7 @@ namespace Loon.Compiler
                 else
                 {
                     CompilationState.Add(Templates.Mov(Register.eax, valueToAssignAlias.Symbol));
-                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name, Register.eax));
+                    CompilationState.Add(Templates.Mov(assignmentExpression.AssignmentTarget.Name.Decorate(), Register.eax));
                     if (!destination.IsDiscard) CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
                 }
             }
@@ -252,16 +321,24 @@ namespace Loon.Compiler
 
             if (identifierExpression.Type == BuiltinTypes.Double)
             {
-                CompilationState.Add(Templates.Movq(destination.Symbol, identifierExpression.IdentifierSymbol.Lexeme));
+                CompilationState.Add(Templates.Movq(destination.Symbol, identifierExpression.IdentifierSymbol.Lexeme.Decorate()));
             }
             else if (identifierExpression.Type == BuiltinTypes.String)
             {
-                CompilationState.Add(Templates.Mov(Register.eax, identifierExpression.IdentifierSymbol.Lexeme));
+                CompilationState.Add(Templates.Mov(Register.eax, identifierExpression.IdentifierSymbol.Lexeme.Decorate()));
                 CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
+            }
+            else if (identifierExpression.Type == BuiltinTypes.Int8)
+            {
+                CompilationState.Add(Templates.Movb(destination.Symbol, identifierExpression.IdentifierSymbol.Lexeme.Decorate()));
+            }
+            else if (identifierExpression.Type == BuiltinTypes.Int16)
+            {
+                CompilationState.Add(Templates.Movw(destination.Symbol, identifierExpression.IdentifierSymbol.Lexeme.Decorate()));
             }
             else
             {
-                CompilationState.Add(Templates.Mov(Register.eax, identifierExpression.IdentifierSymbol.Lexeme));
+                CompilationState.Add(Templates.Mov(Register.eax, identifierExpression.IdentifierSymbol.Lexeme.Decorate()));
                 CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
             }
         }
@@ -283,6 +360,14 @@ namespace Loon.Compiler
             else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.String)
             {
                 CompilationState.Add(Templates.FinishCall(callExpression.CrateFunction, destination.Symbol));
+            }
+            else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.Int8)
+            {
+                CompilationState.Add(Templates.FinishCallb(callExpression.CrateFunction, destination.Symbol));
+            }
+            else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.Int16)
+            {
+                CompilationState.Add(Templates.FinishCallw(callExpression.CrateFunction, destination.Symbol));
             }
             else if (callExpression.CrateFunction.ReturnType == BuiltinTypes.Int32)
             {
@@ -309,7 +394,15 @@ namespace Loon.Compiler
 
             CompilationState.AddStaticData(literalExpression.Type, literalExpression.Value, out var valueAlias);
 
-            if (literalExpression.Type == BuiltinTypes.Double)
+            if (literalExpression.Type == BuiltinTypes.Int8)
+            {
+                CompilationState.Add(Templates.Movb(destination.Symbol, valueAlias.Symbol));
+            }
+            else if (literalExpression.Type == BuiltinTypes.Int16)
+            {
+                CompilationState.Add(Templates.Movw(destination.Symbol, valueAlias.Symbol));
+            }
+            else if (literalExpression.Type == BuiltinTypes.Double)
             {
                 CompilationState.Add(Templates.Movq(destination.Symbol, valueAlias.Symbol));
             }
@@ -377,42 +470,27 @@ namespace Loon.Compiler
                 var labelEnd = Generator.Label("CMP_END");
                 var labelSetTrue = Generator.Label("CMP_SET_TRUE");
 
-                if (binaryExpression.Lhs.Type == BuiltinTypes.Double
+                if (binaryExpression.Lhs.Type == BuiltinTypes.Int8
                     && binaryExpression.Rhs.Type == BuiltinTypes.Double)
                 {
-                    CompilationState.Add(Templates.Cmp_Double_Double(lhsAlias.Symbol, rhsAlias.Symbol));
+                    CompilationState.Add(Templates.Cmp_Int8_Double(lhsAlias.Symbol, rhsAlias.Symbol, out var producedLocal));
+                    CompilationState.Add(producedLocal);
                 }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Double
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Int32)
-                {
-                    CompilationState.Add(Templates.Cmp_Double_Int32(lhsAlias.Symbol, rhsAlias.Symbol));
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Int32
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Int32)
-                {
-                    CompilationState.Add(Templates.Cmp_Int32_Int32(lhsAlias.Symbol, rhsAlias.Symbol));
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Int32
+                else if (binaryExpression.Lhs.Type == BuiltinTypes.Int8
                     && binaryExpression.Rhs.Type == BuiltinTypes.Double)
                 {
-                    CompilationState.Add(Templates.Cmp_Int32_Double(lhsAlias.Symbol, rhsAlias.Symbol));
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Nullptr
+                    CompilationState.Add(Templates.Cmp_Double_Int8(lhsAlias.Symbol, rhsAlias.Symbol, out var producedLocal));
+                    CompilationState.Add(producedLocal);
+                }else if (binaryExpression.Lhs.Type.IsReferenceType
+                    && binaryExpression.Rhs.Type == BuiltinTypes.Nullptr)
+                {
+                    CompilationState.Add(Templates.Cmp_Ref_Nullptr(lhsAlias.Symbol)); // This works because we only allow equality operators for nullptr 
+                }else if (binaryExpression.Lhs.Type == BuiltinTypes.Nullptr
                     && binaryExpression.Rhs.Type.IsReferenceType)
                 {
                     CompilationState.Add(Templates.Cmp_Ref_Nullptr(rhsAlias.Symbol));
                 }
-                else if (binaryExpression.Lhs.Type.IsReferenceType
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Nullptr)
-                {
-                    CompilationState.Add(Templates.Cmp_Ref_Nullptr(lhsAlias.Symbol));
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.String
-                        && binaryExpression.Rhs.Type == BuiltinTypes.String)
-                {
-                    CompilationState.Add(Templates.Cmp_String_String(lhsAlias.Symbol, rhsAlias.Symbol));
-                }
-                else throw new Exception($"unable to generate code for comparison of types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
+                else CompilationState.Add(CompileBinaryComparisonHelper(binaryExpression.Lhs.Type, binaryExpression.Rhs.Type, lhsAlias.Symbol, rhsAlias.Symbol));
                 CompilationState.Add(Templates.Jump(binaryExpression.Operator, labelSetTrue));
                 CompilationState.Add(Templates.Mov(Register.eax, 0));
                 CompilationState.Add(Templates.Mov(destination.Symbol, Register.eax));
@@ -426,68 +504,19 @@ namespace Loon.Compiler
             {
                 CompileExpression(binaryExpression.Lhs, lhsAlias);
                 CompileExpression(binaryExpression.Rhs, rhsAlias);
-                if (binaryExpression.Lhs.Type == BuiltinTypes.Double
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Double)
+                var lhsType = binaryExpression.Lhs.Type;
+                var rhsType = binaryExpression.Rhs.Type;
+                if (lhsType == BuiltinTypes.Int8 || lhsType == BuiltinTypes.Int16)
                 {
-                    if (binaryExpression.Operator == BinaryOperator.Add)
-                         CompilationState.Add(Templates.Add_Double_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Subtract)
-                         CompilationState.Add(Templates.Sub_Double_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Multiply)
-                         CompilationState.Add(Templates.Mul_Double_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Divide)
-                         CompilationState.Add(Templates.Div_Double_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
+                    CompilationState.Add(PromoteType(binaryExpression.Lhs.Type, lhsAlias.Symbol, out lhsAlias, out lhsType));
+                    CompilationState.Add(lhsAlias);
                 }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Double
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Int32)
+                if (rhsType == BuiltinTypes.Int8 || rhsType == BuiltinTypes.Int16)
                 {
-                    if (binaryExpression.Operator == BinaryOperator.Add)
-                         CompilationState.Add(Templates.Add_Double_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Subtract)
-                         CompilationState.Add(Templates.Sub_Double_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Multiply)
-                         CompilationState.Add(Templates.Mul_Double_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Divide)
-                         CompilationState.Add(Templates.Div_Double_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
+                    CompilationState.Add(PromoteType(binaryExpression.Rhs.Type, rhsAlias.Symbol, out rhsAlias, out rhsType));
+                    CompilationState.Add(rhsAlias);
                 }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Int32
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Int32)
-                {
-                    if (binaryExpression.Operator == BinaryOperator.Add)
-                         CompilationState.Add(Templates.Add_Int32_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Subtract)
-                         CompilationState.Add(Templates.Sub_Int32_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Multiply)
-                         CompilationState.Add(Templates.Mul_Int32_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Divide)
-                         CompilationState.Add(Templates.Div_Int32_Int32(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.Int32
-                    && binaryExpression.Rhs.Type == BuiltinTypes.Double)
-                {
-                    if (binaryExpression.Operator == BinaryOperator.Add)
-                         CompilationState.Add(Templates.Add_Int32_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Subtract)
-                         CompilationState.Add(Templates.Sub_Int32_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Multiply)
-                         CompilationState.Add(Templates.Mul_Int32_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else if (binaryExpression.Operator == BinaryOperator.Divide)
-                         CompilationState.Add(Templates.Div_Int32_Double(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    else new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
-                }
-                else if (binaryExpression.Lhs.Type == BuiltinTypes.String
-                    && binaryExpression.Rhs.Type == BuiltinTypes.String)
-                {
-                    if (binaryExpression.Operator == BinaryOperator.Add)
-                    {
-                        CompilationState.Add(Templates.Add_String_String(lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
-                    }
-                    else new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
-                }
-                else throw new Exception($"unable to generate code for operation {binaryExpression.Operator} on types {binaryExpression.Lhs.Type}, {binaryExpression.Rhs.Type}");
+                CompilationState.Add(CompileBinaryHelper(binaryExpression.Operator, lhsType, rhsType, lhsAlias.Symbol, rhsAlias.Symbol, destination.Symbol));
             }
 
         }
@@ -526,6 +555,51 @@ namespace Loon.Compiler
         {
             CompilationState.Add(Templates.Allocate_Struct(typeInitializerExpression.Type, destination.Symbol));
         }
+
+
+        #region Helpers
+
+        private CompilationUnit CompileBinaryHelper(BinaryOperator op, CrateType lhsType, CrateType rhsType, string lhsAlias, string rhsAlias, string destination)
+        {
+            if (op.ToString().Length < 3) throw new Exception($"unsupported operator {op}");
+            var functionSignature = $"{op.ToString().Substring(0, 3)}_{lhsType.Name.CapitalizeFirst()}_{rhsType.Name.CapitalizeFirst()}";
+            var method = typeof(Templates).GetMethod(functionSignature);
+            if (method == null) throw new Exception($"unable to generate code for operation {op} with types {lhsType}, {rhsType}");
+            try
+            {
+                return (CompilationUnit?)method.Invoke(null, new object[] { lhsAlias, rhsAlias, destination }) ?? throw new Exception();
+            }catch (Exception)
+            {
+                throw new Exception($"unable to generate code for operation {op} with types {lhsType}, {rhsType}: internal exception");
+            }
+
+        }
+
+        private CompilationUnit CompileBinaryComparisonHelper(CrateType lhsType, CrateType rhsType, string lhsAlias, string rhsAlias)
+        {
+            var functionSignature = $"Cmp_{lhsType.Name.CapitalizeFirst()}_{rhsType.Name.CapitalizeFirst()}";
+            var method = typeof(Templates).GetMethod(functionSignature);
+            if (method == null) throw new Exception($"unable to generate code for comparison with types {lhsType}, {rhsType}");
+            try
+            {
+                return (CompilationUnit?)method.Invoke(null, new object[] { lhsAlias, rhsAlias }) ?? throw new Exception();
+            }
+            catch (Exception)
+            {
+                throw new Exception($"unable to generate code for comparison with types {lhsType}, {rhsType}: internal exception");
+            }
+        }
+
+        private CompilationUnit PromoteType(CrateType type, string alias, out LocalVariable producedLocal, out CrateType newType)
+        {
+            newType = BuiltinTypes.Int32;
+            if (type == BuiltinTypes.Int8) return Templates.Convert_Int8_Int32(alias, Generator.LocalVariable(BuiltinTypes.Int32, out producedLocal).Symbol);
+            if (type == BuiltinTypes.Int16) return Templates.Convert_Int16_Int32(alias, Generator.LocalVariable(BuiltinTypes.Int32, out producedLocal).Symbol);
+            throw new Exception($"unable to promote type {type} to {BuiltinTypes.Int32}");
+        }
+
+
+        #endregion
 
     }
 }

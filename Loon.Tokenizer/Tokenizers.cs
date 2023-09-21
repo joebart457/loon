@@ -53,10 +53,16 @@ namespace Loon.Tokenizer
                     new TokenizerRule(TokenTypes.SizeOperator, "$"),
                     new TokenizerRule(TokenTypes.Entry, "entry"),
                     new TokenizerRule(TokenTypes.Var, "var"),
+                    new TokenizerRule(TokenTypes.While, "while"),
+                    new TokenizerRule(TokenTypes.For, "for"),
                     new TokenizerRule(TokenTypes.Nullptr, "nullptr"),
+                    new TokenizerRule(TokenTypes.I8, "i8"),
+                    new TokenizerRule(TokenTypes.I16, "i16"),
+                    new TokenizerRule(TokenTypes.I32, "i32"),
                     new TokenizerRule(TokenTypes.ForeignFunctionInterface, "ffi"),
                     new TokenizerRule(BuiltinTokenTypes.String, "\"", enclosingLeft: "\"", enclosingRight: "\""),
                     new TokenizerRule(TokenTypes.FunctionModule, "[", enclosingLeft: "[", enclosingRight: "]"),
+                    new TokenizerRule(TokenTypes.InlineAssembly, "__asm {{", enclosingLeft: "__asm {{", enclosingRight: "}}"),
         };
         public static TokenizerSettings DefaultSettings => new TokenizerSettings
         {
