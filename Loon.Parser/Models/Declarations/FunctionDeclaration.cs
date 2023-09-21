@@ -24,13 +24,14 @@ namespace Loon.Parser.Models.Declarations
     {
         public bool IsFFI { get; set; } = false;
         public bool IsEntry { get; set; } = false;
+        public bool IsExport { get; set; } = false;
         public string Module { get; set; }
         public TypeSymbol ReturnType { get; set; }
         public string FunctionName { get; set; } = "";
         public CallingConvention CallingConvention { get; set; }
         public List<FunctionDeclarationParameter> Parameters { get; set; } = new();
         public List<StatementBase> Body { get; set; } = new();
-        public FunctionDeclaration(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, TypeSymbol returnType, string functionName, List<FunctionDeclarationParameter> parameters, List<StatementBase> body)
+        public FunctionDeclaration(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, TypeSymbol returnType, string functionName, List<FunctionDeclarationParameter> parameters, List<StatementBase> body, bool isExport)
         {
             IsFFI = isFFI;
             IsEntry = isEntry;
@@ -40,6 +41,7 @@ namespace Loon.Parser.Models.Declarations
             FunctionName = functionName;
             Parameters = parameters;
             Body = body;
+            IsExport = isExport;
         }
     }
 }

@@ -126,7 +126,7 @@ namespace Loon.Analyzer._Analyzer
             var returnType = ResolveReturnTypeSymbol(functionDeclaration.ReturnType);
             var fnName = functionDeclaration.FunctionName;
             var parameters = functionDeclaration.Parameters.Select(p => new CrateParameterInfo(p.ParameterName, ResolveTypeSymbol(p.ParameterType))).ToList();
-            var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new());           
+            var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new(), functionDeclaration.IsExport);           
             _currentRunData.CurrentScopedFunction = fn;
             _currentRunData.EnterScope();
             parameters.ForEach(p => _currentRunData.RegisterLocalVariable(p.Name, p.CrateType));
@@ -142,7 +142,7 @@ namespace Loon.Analyzer._Analyzer
             var returnType = ResolveReturnTypeSymbol(functionDeclaration.ReturnType);
             var fnName = functionDeclaration.FunctionName;
             var parameters = functionDeclaration.Parameters.Select(p => new CrateParameterInfo(p.ParameterName, ResolveTypeSymbol(p.ParameterType))).ToList();
-            var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new());
+            var fn = new CrateFunction(functionDeclaration.IsFFI, functionDeclaration.IsEntry, functionDeclaration.CallingConvention, functionDeclaration.Module, fnName, returnType, parameters, new(), functionDeclaration.IsExport);
             RegisterFunction(fn);
             return fn;
         }
@@ -158,6 +158,8 @@ namespace Loon.Analyzer._Analyzer
             if (statement is Parser.Models.Statements.BlockStatement blockStatement) return ResolveBlockStatement(blockStatement);
             if (statement is Parser.Models.Statements.WhileStatement whileStatement) return ResolveWhileStatement(whileStatement);
             if (statement is Parser.Models.Statements.ForStatement forStatement) return ResolveForStatement(forStatement);
+            if (statement is Parser.Models.Statements.BreakStatement) return new Models.BreakStatement();
+            if (statement is Parser.Models.Statements.ContinueStatement) return new Models.ContinueStatement();
             if (statement is Parser.Models.Statements.InlineAssemblyStatement inlineAssemblyStatement) return new Models.InlineAssemblyStatement(inlineAssemblyStatement.Asm);
             throw new Exception($"unsupported statement type {statement}");
         }
@@ -197,8 +199,12 @@ namespace Loon.Analyzer._Analyzer
         private ResolvedStatement ResolveReturnStatement(Parser.Models.Statements.ReturnStatement returnStatement)
         {
             if (_currentRunData.CurrentScopedFunction == null) throw new Exception($"return statement must be located within function body");
-            var returnValue = ResolveExpression(returnStatement.ReturnValue);
-            if (_currentRunData.CurrentScopedFunction.ReturnType != returnValue.Type) throw new Exception($"expect return type of {_currentRunData.CurrentScopedFunction.ReturnType} but got {returnValue.Type}");
+            var returnValue = returnStatement.ReturnValue == null? null: ResolveExpression(returnStatement.ReturnValue);
+            if (returnValue == null)
+            {
+                if (_currentRunData.CurrentScopedFunction.ReturnType != BuiltinTypes.Void) throw new Exception($"expect return value of type {_currentRunData.CurrentScopedFunction.ReturnType}");
+            }
+            else if (_currentRunData.CurrentScopedFunction.ReturnType != returnValue.Type) throw new Exception($"expect return type of {_currentRunData.CurrentScopedFunction.ReturnType} but got {returnValue.Type}");
             return new Models.ReturnStatement(returnValue);
         }
 
@@ -354,10 +360,10 @@ namespace Loon.Analyzer._Analyzer
 
         private void RegisterBuiltinFunctions()
         {
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "GetProcessHeap", BuiltinTypes.Int32, new(), new()));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "ExitProcess", BuiltinTypes.Void, new(), new()));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapAlloc", BuiltinTypes.Int32, new() { new("hHeap", BuiltinTypes.Int32), new("mode", BuiltinTypes.Int32), new("nBytes", BuiltinTypes.Int32) }, new()));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapFree", BuiltinTypes.Int32, new() { new("dataPtr", BuiltinTypes.Int32) }, new()));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "GetProcessHeap", BuiltinTypes.Int32, new(), new(), false));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "ExitProcess", BuiltinTypes.Void, new(), new(), false));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapAlloc", BuiltinTypes.Int32, new() { new("hHeap", BuiltinTypes.Int32), new("mode", BuiltinTypes.Int32), new("nBytes", BuiltinTypes.Int32) }, new(), false));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapFree", BuiltinTypes.Int32, new() { new("dataPtr", BuiltinTypes.Int32) }, new(), false));
 
         }
 
@@ -425,6 +431,7 @@ namespace Loon.Analyzer._Analyzer
             }
             return null;
         }
+
         private CrateType? GetResultingType(UnaryOperator op, CrateType rhs)
         {
             if (op == UnaryOperator.Not)
@@ -446,8 +453,6 @@ namespace Loon.Analyzer._Analyzer
 
             return null;
         }
-
-
     }
 
 

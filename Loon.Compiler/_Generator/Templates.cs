@@ -58,6 +58,13 @@ namespace Loon.Compiler._Generator
             return new CompilationUnit().Append(Ins.Label(endIfLabel));
         }
 
+        public static CompilationUnit Return()
+        {
+            return new CompilationUnit()
+                .Append(Ins.MOV(Register.edx, Size.DWORD(0)))
+                .Append(Ins.MOV(Register.eax, Size.DWORD(0)))
+                .Append(Ins.RET());
+        }
 
         public static CompilationUnit Return(string returnAlias)
         {

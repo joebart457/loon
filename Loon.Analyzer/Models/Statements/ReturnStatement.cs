@@ -11,16 +11,16 @@ namespace Loon.Analyzer.Models
 {
     public class ReturnStatement: ResolvedStatement
     {
-        public TypedExpression ReturnValue { get; set; }
+        public TypedExpression? ReturnValue { get; set; }
 
-        public ReturnStatement(TypedExpression returnValue)
+        public ReturnStatement(TypedExpression? returnValue)
         {
             ReturnValue = returnValue;
         }
 
         public override string RegenerateCode(int indentLevel = 0)
         {
-            return $"return {ReturnValue.RegenerateCode(0)}".Indent(indentLevel);
+            return $"return {ReturnValue?.RegenerateCode(0)}".Indent(indentLevel);
         }
     }
 }

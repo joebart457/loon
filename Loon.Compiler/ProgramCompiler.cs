@@ -103,12 +103,26 @@ namespace Loon.Compiler
             else if (statement is WhileStatement whileStatement) CompileWhileStatement(whileStatement);
             else if (statement is ForStatement forStatement) CompileForStatement(forStatement);
             else if (statement is InlineAssemblyStatement inlineAssemblyStatement) CompileInlineAssemblyStatement(inlineAssemblyStatement);
+            else if (statement is BreakStatement breakStatement) CompileBreakStatement(breakStatement);
+            else if (statement is ContinueStatement continueStatement) CompileContinueStatement(continueStatement);
             else throw new Exception($"unsupported statement type {statement.GetType().Name}");
         }
 
         private void CompileInlineAssemblyStatement(InlineAssemblyStatement inlineAssemblyStatement)
         {
             CompilationState.Add(Templates.InlineAssembly(inlineAssemblyStatement.Asm));
+        }
+
+        private void CompileBreakStatement(BreakStatement breakStatement)
+        {
+            if (CompilationState.LoopEndLabel == null) throw new Exception("unable to generate code for break statement not inside of loop");
+            CompilationState.Add(Templates.Jmp(CompilationState.LoopEndLabel));
+        }
+
+        private void CompileContinueStatement(ContinueStatement continueStatement)
+        {
+            if (CompilationState.LoopStartLabel == null) throw new Exception("unable to generate code for continue statement not inside of loop");
+            CompilationState.Add(Templates.Jmp(CompilationState.LoopStartLabel));
         }
 
         private void CompileExpressionStatement(ExpressionStatement expressionStatement)
@@ -143,7 +157,14 @@ namespace Loon.Compiler
             Generator.Label("while_end", out var loopEnd);
             CompileExpression(whileStatement.Condition, conditionLocal);
             CompilationState.Add(Templates.Jz(loopEnd));
+
+            var prevStart = CompilationState.LoopStartLabel;
+            var prevEnd = CompilationState.LoopEndLabel;
+            CompilationState.LoopStartLabel = loopStart;
+            CompilationState.LoopEndLabel = loopEnd;
             CompileStatement(whileStatement.Then);
+            CompilationState.LoopStartLabel = prevStart;
+            CompilationState.LoopEndLabel = prevEnd;
             CompilationState.Add(Templates.Jmp(loopStart));
             CompilationState.Add(Templates.Label(loopEnd));
         }
@@ -160,7 +181,13 @@ namespace Loon.Compiler
                 CompilationState.Add(Templates.Jz(loopEnd));
 
             }
+            var prevStart = CompilationState.LoopStartLabel;
+            var prevEnd = CompilationState.LoopEndLabel;
+            CompilationState.LoopStartLabel = loopStart;
+            CompilationState.LoopEndLabel = loopEnd;
             CompileStatement(forStatement.Then);
+            CompilationState.LoopStartLabel = prevStart;
+            CompilationState.LoopEndLabel = prevEnd;
             if (forStatement.Iterator != null)
             {
                 CompilationState.Add(Generator.LocalVariable(forStatement.Iterator.Type, true, out var discardAlias));
@@ -178,6 +205,11 @@ namespace Loon.Compiler
 
         private void CompileReturnStatement(ReturnStatement returnStatement)
         {
+            if (returnStatement.ReturnValue == null)
+            {
+                CompilationState.Add(Templates.Return());
+                return;
+            }
             CompilationState.Add(Generator.LocalVariable(returnStatement.ReturnValue.Type, out var returnAlias));
             CompileExpression(returnStatement.ReturnValue, returnAlias);
             if (returnStatement.ReturnValue.Type == BuiltinTypes.Double)

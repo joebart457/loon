@@ -39,11 +39,12 @@ namespace Crater.Shared.Models
         public CallingConvention CallingConvention { get; set; }
         public bool IsEntry { get; set; }
         public bool IsFFI { get; set; }
+        public bool IsExport { get; set; }
         public string Name { get; set; }
         public CrateType ReturnType { get; set; }
         public List<CrateParameterInfo> Parameters { get; set; }
         public List<ResolvedStatement> Body { get; set; }
-        public CrateFunction(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, string name, CrateType returnType, List<CrateParameterInfo> parameters, List<ResolvedStatement> body)
+        public CrateFunction(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, string name, CrateType returnType, List<CrateParameterInfo> parameters, List<ResolvedStatement> body, bool isExport)
         {
             IsFFI = isFFI;
             IsEntry = isEntry;
@@ -53,6 +54,7 @@ namespace Crater.Shared.Models
             ReturnType = returnType;
             Parameters = parameters;
             Body = body;
+            IsExport = isExport;
         }
 
 

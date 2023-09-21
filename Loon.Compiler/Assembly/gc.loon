@@ -1,0 +1,94 @@
+type ls_node {
+	.dat int32
+	.next gc_ls_node
+	.prev gc_ls_node
+}
+
+type ls_wrapper {
+	.first ls_node
+	.last ls_node
+}
+
+fn ls_remove_node(ls_wrapper ls, int32 dat): int32 {
+	if (ls == nullptr) return 0;
+	ls_node current = ls.first;
+	int32 found = 0;
+	while (current != nullptr)
+	{
+		if (current.dat == dat){
+			found = 1;
+			ls_node next = current.next;
+			ls_node prev = current.prev;
+			prev.next = next;
+			next.prev = prev;
+			__asm {{
+				invoke HeapFree [_hHeap], dword 8, [!current];
+			}}
+			current = nullptr;
+			break;
+		}else {
+			current = current.next;
+		}
+	}
+	return found;
+}
+
+fn ls_add_node(ls_wrapper ls, int32 dat): int32 {
+	if (ls == nullptr) return 0;
+	if (ls.last == nullptr){
+		ls.last = create ls_node();
+		ls.first = ls.last;
+		ls.last.dat = dat;
+	} else {
+		var node = create ls_node();
+		ls.last.next = node;
+		node.prev = ls.last;
+		ls.last = node;
+	}
+	return 1;
+}
+
+
+
+
+
+type gc_gray_ls_wrapper {
+	.first gc_ls_node
+}
+
+
+fn AllocateMemory(int32 size): int32 {
+	var ptr = 0;
+	__asm {{
+		stdcall HeapAlloc [_hHeap], dword 8, dword [!size]
+		test eax, eax
+		jz FAIL_ALLOC
+		mov [!ptr], eax	
+	}}
+	AddWhiteNode(ptr);
+	ret ptr;
+}
+
+
+fn AddWhiteNode(int32 datPtr): void_t {
+	__asm {{
+		stdcall ls_add_node, [_gc_white], [!datPtr]
+		ret
+	}}
+}
+
+fn RemoveWhiteNode(int32 datPtr): void_t {
+	__asm {{
+		stdcall ls_remove_node, [_gc_white], [!datPtr]
+		ret
+	}}
+}
+
+
+
+fn MoveWhiteGray(int32 datPtr, int32 fnPtr): void_t {
+	
+	
+
+
+}

@@ -8,7 +8,7 @@ namespace Loon.Parser.Exceptions
         public IToken Token { get; private set; }
 
         public ParsingException(string msg, IToken token)
-            :base(msg) 
+            :base($"{msg} at {token}") 
         {
             Token = token;
         }

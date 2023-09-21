@@ -9,9 +9,9 @@ namespace Loon.Parser.Models.Statements
 {
     public class ReturnStatement: StatementBase
     {
-        public ExpressionBase ReturnValue { get; set; }
+        public ExpressionBase? ReturnValue { get; set; }
 
-        public ReturnStatement(ExpressionBase returnValue)
+        public ReturnStatement(ExpressionBase? returnValue)
         {
             ReturnValue = returnValue;
         }

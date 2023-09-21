@@ -57,6 +57,9 @@ namespace Loon.Tokenizer.Constants
         public const string Asterisk = "Asterisk";
         public const string SizeOperator = "SizeOperator";
         public const string Nullptr = "Nullptr";
+        public const string Export = "Export";
+        public const string Break = "Break";
+        public const string Continue = "Continue";
 
         public const string Entry = "Entry";
         public const string ForeignFunctionInterface = "ForeignFunctionInterface";

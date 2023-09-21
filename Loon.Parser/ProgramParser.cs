@@ -16,7 +16,7 @@ namespace Loon.Parser
     public class ProgramParser: TokenParser
     {
         private readonly NumberFormatInfo DefaultNumberFormat = new NumberFormatInfo { NegativeSign = "-" };
-
+        private bool InsideLoop = false;
         public IEnumerable<DeclarationBase> ParseFile(string path)
         {
             var tokenizer = Tokenizers.Default;
@@ -35,7 +35,12 @@ namespace Loon.Parser
         private DeclarationBase ParseDeclaration()
         {
             if (AdvanceIfMatch(TokenTypes.Type)) return ParseTypeDeclaration();
-            if (AdvanceIfMatch(TokenTypes.Function)) return ParseFunctionDeclaration();
+            if (AdvanceIfMatch(TokenTypes.Function)) return ParseFunctionDeclaration(false);
+            if (AdvanceIfMatch(TokenTypes.Export))
+            {
+                Consume(TokenTypes.Function, "expect function declaration after 'export'");
+                return ParseFunctionDeclaration(true);
+            }
             if (AdvanceIfMatch(TokenTypes.ForeignFunctionInterface)) return ParseForeignFunctionDeclaration();
             throw new ParsingException($"expect only top-level declarations", Current());
         }
@@ -59,7 +64,7 @@ namespace Loon.Parser
             return new TypeDeclaration(typeName.Lexeme, fields);
         }
 
-        private DeclarationBase ParseFunctionDeclaration()
+        private DeclarationBase ParseFunctionDeclaration(bool isExport)
         {
             var isEntry = AdvanceIfMatch(TokenTypes.Entry);
             var functionName = Consume(BuiltinTokenTypes.Word, "expect function name in declaration");
@@ -79,7 +84,7 @@ namespace Loon.Parser
             Consume(TokenTypes.Colon, "expect return type specifier after parameter list");
             var returnType = ParseTypeSymbol();
             var body = ParseFunctionBody();
-            return new FunctionDeclaration(false, isEntry, CallingConvention.StdCall, "", returnType, functionName.Lexeme, parameters, body);
+            return new FunctionDeclaration(false, isEntry, CallingConvention.StdCall, "", returnType, functionName.Lexeme, parameters, body, isExport);
         }
 
         private DeclarationBase ParseForeignFunctionDeclaration()
@@ -121,7 +126,7 @@ namespace Loon.Parser
             Consume(TokenTypes.Colon, "expect return type specifier after parameter list");
             var returnType = ParseTypeSymbol();
             
-            return new FunctionDeclaration(true, false, callingConvention, module.Lexeme, returnType, functionName.Lexeme, parameters, new());
+            return new FunctionDeclaration(true, false, callingConvention, module.Lexeme, returnType, functionName.Lexeme, parameters, new(), false);
         }
 
         private StatementBase ParseStatement()
@@ -132,6 +137,8 @@ namespace Loon.Parser
             if (AdvanceIfMatch(TokenTypes.For)) return ParseForStatement();
             if (AdvanceIfMatch(TokenTypes.While)) return ParseWhileStatement();
             if (AdvanceIfMatch(TokenTypes.LCurly)) return ParseBlockStatement();
+            if (InsideLoop && AdvanceIfMatch(TokenTypes.Break)) return new BreakStatement();
+            if (InsideLoop && AdvanceIfMatch(TokenTypes.Continue)) return new ContinueStatement();
             if (AdvanceIfMatch(TokenTypes.InlineAssembly)) return new InlineAssemblyStatement(Previous().Lexeme);
             return ParseExpressionStatement();
         }
@@ -141,7 +148,10 @@ namespace Loon.Parser
             Consume(TokenTypes.LParen, "expect (condition) in while loop");
             var condition = ParseExpression();
             Consume(TokenTypes.RParen, "expect enclosing ) in while statement loop");
+            var previous = InsideLoop;
+            InsideLoop = true;
             var then = ParseStatement();
+            InsideLoop = previous;
             return new WhileStatement(condition, then);
         }
 
@@ -198,7 +208,9 @@ namespace Loon.Parser
 
         private StatementBase ParseReturnStatement()
         {
-            var returnValue = ParseExpression();
+            ExpressionBase? returnValue = null;
+            if (!Match(TokenTypes.SemiColon))
+                returnValue = ParseExpression();
             Consume(TokenTypes.SemiColon, "expect ; after statement");
             return new ReturnStatement(returnValue);
         }
