@@ -8,5 +8,9 @@ namespace Loon.Parser.Models
 {
     public class Nullptr
     {
+        public override string ToString()
+        {
+            return "nullptr";
+        }
     }
 }

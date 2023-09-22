@@ -15,7 +15,7 @@ namespace Loon.Compiler.Extensions
 
         public static string Decorate(this string src)
         {
-            return $"!{src}";
+            return $".!{src}";
         }
 
         public static string CapitalizeFirst(this string src)
