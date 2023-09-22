@@ -17,5 +17,10 @@ namespace Loon.Parser.Models.Expressions
             AssignmentTarget = assignmentTarget;
             ValueToAssign = valueToAssign;
         }
+
+        public override ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new AssignmentExpression(InstanceTarget?.ReplaceGenericTypeParameters(typeParameters), AssignmentTarget, ValueToAssign.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

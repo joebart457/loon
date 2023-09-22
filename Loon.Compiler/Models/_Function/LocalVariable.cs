@@ -23,6 +23,7 @@ namespace Loon.Compiler.Models._Function
 
         public string GenerateAssembly(CompilationSettings settings, int indentLevel = 0)
         {
+            if (CrateType == BuiltinTypes.Void) return $";local {Symbol}:?? ; local not created for void_t";
             return $"local {Symbol}:{GetLocalVariableType(CrateType)} ; local for type {CrateType}".Indent(indentLevel);
         }
 
@@ -33,6 +34,7 @@ namespace Loon.Compiler.Models._Function
             if (type == BuiltinTypes.Double) return "QWORD";
             if (type == BuiltinTypes.String) return "DWORD";
             if (type == BuiltinTypes.Int32) return "DWORD";
+            if (type == BuiltinTypes.Nullptr) return "DWORD";
             if (type.IsReferenceType) return "DWORD";
             if (!type.IsBuiltin && !type.IsReferenceType) return "DWORD";
             throw new Exception($"unable to determine local assembly type alias for type {type}");

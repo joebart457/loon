@@ -60,7 +60,7 @@ namespace Loon.Compiler.Models._Function
             var sb = new StringBuilder();
             var callingConvention = Function.CallingConvention == CallingConvention.StdCall ? "stdcall" : "";
             var parameters = string.Join(", ", Function.Parameters.Select(p => ParameterHelper(p)));
-            sb.AppendLine($"proc {Function.Name} {callingConvention} {parameters}".Indent(indentLevel));
+            sb.AppendLine($"proc {Function.GetDecoratedAssemblyName()} {callingConvention} {parameters}".Indent(indentLevel));
             return sb.ToString();
         }
 

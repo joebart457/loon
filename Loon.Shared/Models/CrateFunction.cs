@@ -44,7 +44,8 @@ namespace Crater.Shared.Models
         public CrateType ReturnType { get; set; }
         public List<CrateParameterInfo> Parameters { get; set; }
         public List<ResolvedStatement> Body { get; set; }
-        public CrateFunction(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, string name, CrateType returnType, List<CrateParameterInfo> parameters, List<ResolvedStatement> body, bool isExport)
+        private bool _doNotObfuscate = false;
+        public CrateFunction(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, string name, CrateType returnType, List<CrateParameterInfo> parameters, List<ResolvedStatement> body, bool isExport, bool doNotObfuscate = false)
         {
             IsFFI = isFFI;
             IsEntry = isEntry;
@@ -55,6 +56,7 @@ namespace Crater.Shared.Models
             Parameters = parameters;
             Body = body;
             IsExport = isExport;
+            _doNotObfuscate = doNotObfuscate;
         }
 
 
@@ -66,6 +68,12 @@ namespace Crater.Shared.Models
         public string GetSignature()
         {
             return $"{Name}({string.Join(",", Parameters)}) : {ReturnType}";
+        }
+
+        public string GetDecoratedAssemblyName()
+        {
+            if (_doNotObfuscate) return Name;
+            return $"{Name}!{ReturnType.GetDecoratedAssemblyName()}!{string.Join("!", Parameters.Select(p => p.CrateType.GetDecoratedAssemblyName()))}";
         }
     }
 

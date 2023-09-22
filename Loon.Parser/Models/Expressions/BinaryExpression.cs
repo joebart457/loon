@@ -19,5 +19,10 @@ namespace Loon.Parser.Models.Expressions
             Lhs = lhs;
             Rhs = rhs;
         }
+
+        public override ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new BinaryExpression(Operator, Lhs.ReplaceGenericTypeParameters(typeParameters), Rhs.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

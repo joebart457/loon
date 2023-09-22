@@ -34,6 +34,8 @@ namespace Crater.Shared.Models
         public virtual bool IsBuiltin => false;
         public virtual bool IsNumeric => false;
         public virtual bool IsReferenceType { get; private set; } = true;
+        public virtual List<CrateType> TypeArguments { get; set; } = new();
+        public virtual bool HasGenericTypeArguments => TypeArguments.Any();
         public CrateType(string name, List<CrateFieldInfo> fields)
         {
             Name = name;
@@ -58,7 +60,8 @@ namespace Crater.Shared.Models
             {
                 return Name == type.Name && IsBuiltin == type.IsBuiltin 
                     && IsNumeric == type.IsNumeric && IsReferenceType == type.IsReferenceType
-                    && Fields.SequenceEqual(type.Fields);
+                    && Fields.SequenceEqual(type.Fields)
+                    && TypeArguments.SequenceEqual(type.TypeArguments);
             }
             return false;
         }
@@ -70,7 +73,15 @@ namespace Crater.Shared.Models
 
         public override string ToString()
         {
-            return Name;
+            if (!HasGenericTypeArguments)
+                return Name;
+            return $"{Name}<{string.Join(", ", TypeArguments)}>";
+        }
+
+        public string GetDecoratedAssemblyName()
+        {
+            if (!HasGenericTypeArguments) return Name;
+            return $"{Name}!!{string.Join("!", TypeArguments)}";
         }
 
     }

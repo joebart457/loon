@@ -16,5 +16,10 @@ namespace Loon.Parser.Models.Expressions
             CalleeName = calleeName;
             Arguments = arguments;
         }
+
+        public override ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new CallExpression(CalleeName, Arguments.Select(a => a.ReplaceGenericTypeParameters(typeParameters)).ToList());
+        }
     }
 }

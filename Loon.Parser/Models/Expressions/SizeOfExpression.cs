@@ -14,5 +14,10 @@ namespace Loon.Parser.Models.Expressions
         {
             TypeSymbol = typeSymbol;
         }
+
+        public override ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new SizeOfExpression(TypeSymbol.ReplaceMatchingTypeSymbols(typeParameters));
+        }
     }
 }

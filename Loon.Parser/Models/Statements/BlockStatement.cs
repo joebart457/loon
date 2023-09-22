@@ -14,5 +14,10 @@ namespace Loon.Parser.Models.Statements
         {
             ChildStatements = childStatements;
         }
+
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new BlockStatement(ChildStatements.Select(s => s.ReplaceGenericTypeParameters(typeParameters)).ToList());
+        }
     }
 }

@@ -20,5 +20,10 @@ namespace Loon.Parser.Models.Statements
             Iterator = iterator;
             Then = then;
         }
+
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new ForStatement(Initializer?.ReplaceGenericTypeParameters(typeParameters), Condition?.ReplaceGenericTypeParameters(typeParameters), Iterator?.ReplaceGenericTypeParameters(typeParameters), Then.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

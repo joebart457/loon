@@ -64,6 +64,7 @@ namespace Loon.Tokenizer
                     new TokenizerRule(TokenTypes.Continue, "continue"),
                     new TokenizerRule(TokenTypes.Break, "break"),
                     new TokenizerRule(TokenTypes.SizeOf, "sizeof"),
+                    new TokenizerRule(TokenTypes.Gen, "gen"),
                     new TokenizerRule(BuiltinTokenTypes.String, "\"", enclosingLeft: "\"", enclosingRight: "\""),
                     new TokenizerRule(TokenTypes.FunctionModule, "[", enclosingLeft: "[", enclosingRight: "]"),
                     new TokenizerRule(TokenTypes.InlineAssembly, "__asm {{", enclosingLeft: "__asm {{", enclosingRight: "}}"),

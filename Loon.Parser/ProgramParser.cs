@@ -47,7 +47,7 @@ namespace Loon.Parser
 
         private DeclarationBase ParseTypeDeclaration()
         {
-            var typeName = Consume(BuiltinTokenTypes.Word, "expect type name in type declaration");
+            var typeName = ParseTypeSymbol(false);
             Consume(TokenTypes.LCurly, "expect field list in type declaration");
             var fields = new List<TypeDeclarationField>();
             if (!AdvanceIfMatch(TokenTypes.RCurly))
@@ -55,19 +55,30 @@ namespace Loon.Parser
                 while (AdvanceIfMatch(TokenTypes.Dot))
                 {
                     var fieldName = Consume(BuiltinTokenTypes.Word, "expect field name in type declaration");
-                    var fieldType = ParseTypeSymbol();
+                    var fieldType = ParseTypeSymbol(typeName.HasGenericTypeArguments);
                     var inline = AdvanceIfMatch(TokenTypes.Inline);
                     fields.Add(new(fieldName.Lexeme, fieldType, inline));
                 }
                 Consume(TokenTypes.RCurly, "expect enclosing } in type declaration");
             }
-            return new TypeDeclaration(typeName.Lexeme, fields);
+            if (typeName.HasGenericTypeArguments)
+                return new GenericTypeDeclaration(typeName.Name, typeName.GenericTypeArguments, fields);
+            return new TypeDeclaration(typeName.Name, fields);
         }
 
         private DeclarationBase ParseFunctionDeclaration(bool isExport)
         {
             var isEntry = AdvanceIfMatch(TokenTypes.Entry);
             var functionName = Consume(BuiltinTokenTypes.Word, "expect function name in declaration");
+            var genericTypeParameters = new List<TypeSymbol>();
+            if (!isEntry && !isExport && AdvanceIfMatch(TokenTypes.LessThan))
+            {
+                do
+                {
+                    genericTypeParameters.Add(ParseGenericTypeParameterSymbol());
+                } while (AdvanceIfMatch(TokenTypes.Comma));
+                Consume(TokenTypes.GreaterThan, "expect enclosing > in generic type parameter list");
+            }
             var parameters = new List<FunctionDeclarationParameter>();
             Consume(TokenTypes.LParen, "expect parameter list in function declaration");
             if (!AdvanceIfMatch(TokenTypes.RParen))
@@ -84,6 +95,8 @@ namespace Loon.Parser
             Consume(TokenTypes.Colon, "expect return type specifier after parameter list");
             var returnType = ParseTypeSymbol();
             var body = ParseFunctionBody();
+            if (genericTypeParameters.Any())
+                return new GenericFunctionDeclaration(false, isEntry, CallingConvention.StdCall, "", returnType, functionName.Lexeme, genericTypeParameters, parameters, body, isExport);
             return new FunctionDeclaration(false, isEntry, CallingConvention.StdCall, "", returnType, functionName.Lexeme, parameters, body, isExport);
         }
 
@@ -426,10 +439,28 @@ namespace Loon.Parser
         }
 
 
-        private TypeSymbol ParseTypeSymbol()
+        private TypeSymbol ParseTypeSymbol(bool allowGenericTypeParameter = true)
         {
+            var isGenericTypeParameter = allowGenericTypeParameter ? AdvanceIfMatch(TokenTypes.Gen): false;
             var typeName = Consume(BuiltinTokenTypes.Word, "expect type name");
-            return new TypeSymbol(typeName.Lexeme);
+            var genericTypeArguments = new List<TypeSymbol>();
+            if (!isGenericTypeParameter && AdvanceIfMatch(TokenTypes.LessThan))
+            {
+                do
+                {
+                    genericTypeArguments.Add(ParseTypeSymbol());
+                } while (Match(TokenTypes.Comma));
+                Consume(TokenTypes.GreaterThan, "expect enclosing > in generic type argument list");
+            }
+            return new TypeSymbol(typeName.Lexeme, genericTypeArguments, isGenericTypeParameter);
+        }
+
+        private TypeSymbol ParseGenericTypeParameterSymbol()
+        {
+            Consume(TokenTypes.Gen, "expect generic type parameter");
+            var typeName = Consume(BuiltinTokenTypes.Word, "expect type name");
+            
+            return new TypeSymbol(typeName.Lexeme, new(), true);
         }
 
         #endregion

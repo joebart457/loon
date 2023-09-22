@@ -16,5 +16,10 @@ namespace Loon.Parser.Models.Statements
         {
             Expression = expression;
         }
+
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new ExpressionStatement(Expression.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

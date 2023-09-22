@@ -34,7 +34,7 @@ namespace Loon.Compiler.Models
                 sb.AppendLine(Ins.MOV(CompilationConstants.HHeap, Register.eax).Indent(indentLevel + 1));
                 // end win specific code
                 sb.AppendLine(Ins.MOV(Register.eax, 0).Indent(indentLevel + 1));
-                sb.AppendLine(Ins.STDCALL(Function.Function.Name, "").Indent(indentLevel + 1));
+                sb.AppendLine(Ins.STDCALL(Function.Function.GetDecoratedAssemblyName(), "").Indent(indentLevel + 1));
                 sb.AppendLine(Ins.PUSH(Register.eax).Indent(indentLevel + 1));
                 sb.AppendLine(Ins.CALL("ExitProcess").Indent(indentLevel + 1));
                 sb.AppendLine(Ins.Label("FAIL_ALLOC").Indent(indentLevel + 1));
@@ -53,7 +53,7 @@ namespace Loon.Compiler.Models
                 sb.AppendLine(Ins.JZ("FAIL_ALLOC").Indent(indentLevel + 1));
                 sb.AppendLine(Ins.MOV(CompilationConstants.HHeap, Register.eax).Indent(indentLevel + 1));
                 // end win specific code
-                sb.AppendLine(Ins.STDCALL(Function.Function.Name, "").Indent(indentLevel + 1));
+                sb.AppendLine(Ins.STDCALL(Function.Function.GetDecoratedAssemblyName(), "").Indent(indentLevel + 1));
                 sb.AppendLine(Ins.RET().Indent(indentLevel + 1));
                 sb.AppendLine(Ins.Label("FAIL_ALLOC").Indent(indentLevel + 1));
                 sb.AppendLine(Ins.Label("FAIL_NULL_PTR").Indent(indentLevel + 1));

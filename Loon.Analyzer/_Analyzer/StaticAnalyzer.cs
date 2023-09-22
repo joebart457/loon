@@ -57,28 +57,42 @@ namespace Loon.Analyzer._Analyzer
             }
         }
 
-        private Dictionary<string, CrateType> _registeredTypes = new();
+        private List<CrateType> _registeredTypes = new();
         private List<CrateFunction> _registeredFunctions = new();
-        private CurrentRunData _currentRunData = new();
 
+        private Dictionary<string, GenericTypeDeclaration> _genericTypeDefinitions = new();
+        private List<GenericFunctionDeclaration> _genericFunctionDefinitions = new();
+
+        private CurrentRunData _currentRunData = new();
+        private List<FunctionDeclaration> _functionsToAnalyze = new();  
         public AnalysisResult Analyze(List<DeclarationBase> declarations)
         {
             _registeredTypes.Clear();
             _registeredFunctions.Clear();
             _currentRunData = new();
+            _functionsToAnalyze.Clear();
             RegisterBuiltinTypes();
             RegisterBuiltinFunctions();
             FirstPass(declarations);
             SecondPass(declarations);
+            ThirdPass();
             CheckEntry();
-            return new AnalysisResult(_registeredTypes.Values.ToList(), _registeredFunctions);
+            return new AnalysisResult(_registeredTypes.ToList(), _registeredFunctions);
         }
 
         private void FirstPass(List<DeclarationBase> declarations)
         {
             foreach (var decl in declarations)
             {
-                if (decl is TypeDeclaration typeDeclaration) GatherTypeSignature(typeDeclaration);
+                if (decl is GenericTypeDeclaration genericTypeDeclaration) AddGenericTypeDefinition(genericTypeDeclaration);
+            }
+            foreach (var decl in declarations)
+            {
+                if (decl is GenericFunctionDeclaration genericFunctionDeclaration) AddGenericFunctionDefinition(genericFunctionDeclaration);
+            }
+            foreach (var decl in declarations)
+            {
+                if (decl is TypeDeclaration typeDeclaration) GatherTypeSignature(typeDeclaration, new());
             }
             foreach(var decl in declarations)
             {
@@ -98,24 +112,58 @@ namespace Loon.Analyzer._Analyzer
             }
         }
 
+        private void ThirdPass()
+        {
+            int count = 0;
+            foreach(var fn in _functionsToAnalyze)
+            {
+                if (count == 1000) throw new Exception("encountered maximum recursion depth when resolving generic function arguments");
+                AnalyzeFunctionDeclaration(fn);
+            }
+        }
+
         private void CheckEntry()
         {
             if (!_registeredFunctions.Any(fn => fn.IsEntry)) throw new Exception("no entry point is defined");
         }
 
-        private CrateType GatherTypeSignature(TypeDeclaration typeDeclaration)
+        private void AddGenericTypeDefinition(GenericTypeDeclaration genericTypeDeclaration)
+        {
+            if (_genericTypeDefinitions.ContainsKey(genericTypeDeclaration.TypeName)) throw new Exception($"redefinition of generic type {genericTypeDeclaration.TypeName}");
+            _genericTypeDefinitions[genericTypeDeclaration.TypeName] = genericTypeDeclaration;
+        }
+
+        private void AddGenericFunctionDefinition(GenericFunctionDeclaration genericFunctionDeclaration)
+        {
+            if (_genericFunctionDefinitions.Any(fn => fn.FunctionName == genericFunctionDeclaration.FunctionName)) throw new Exception($"redefinition of generic function {genericFunctionDeclaration.FunctionName}");
+            _genericFunctionDefinitions.Add(genericFunctionDeclaration);
+        }
+
+        private CrateType GatherTypeSignature(TypeDeclaration typeDeclaration, List<TypeSymbol> genericTypeArguments)
         {
             var typeName = typeDeclaration.TypeName;
-            if (_registeredTypes.ContainsKey(typeName)) throw new Exception($"redefinition of type {typeName}");
+            var typeArguments = genericTypeArguments.Select(t => ResolveTypeSymbol(t)).ToList();
+            if (_registeredTypes.Any(t => t.Name == typeName && t.TypeArguments.SequenceEqual(typeArguments))) throw new Exception($"redefinition of type {typeName}");
             var type = new CrateType(typeName, new());
-            _registeredTypes[typeName] = type;
+            type.TypeArguments = typeArguments;
+            _registeredTypes.Add(type);
             return type;
         }
 
         private CrateType AnalyzeTypeDeclaration(TypeDeclaration typeDeclaration)
         {
             var typeName = typeDeclaration.TypeName;
-            if (!_registeredTypes.TryGetValue(typeName, out var existingType)) throw new Exception($"unable to determine type of symbol {typeName}");
+            var existingType = _registeredTypes.FirstOrDefault(t => t.Name == typeName && !t.HasGenericTypeArguments);
+            if (existingType == null) throw new Exception($"unable to determine type of symbol {typeName}");
+            var fields = typeDeclaration.Fields.Select(f => new CrateFieldInfo(f.FieldName, ResolveTypeSymbol(f))).ToList();
+            existingType.Fields = fields;
+            return existingType;
+        }
+
+        private CrateType AnalyzeGenericTypeDeclaration(TypeDeclaration typeDeclaration, List<CrateType> typeArguments)
+        {
+            var existingType = _registeredTypes.FirstOrDefault(t => t.Name == typeDeclaration.TypeName && t.TypeArguments.SequenceEqual(typeArguments));
+            if (existingType == null) throw new Exception($"error analyzing generic type instantiation {typeDeclaration.TypeName}");
             var fields = typeDeclaration.Fields.Select(f => new CrateFieldInfo(f.FieldName, ResolveTypeSymbol(f))).ToList();
             existingType.Fields = fields;
             return existingType;
@@ -217,6 +265,7 @@ namespace Loon.Analyzer._Analyzer
         {
             if (_currentRunData.CurrentScopedFunction == null) throw new Exception($"variables can only be declared within a function body");
             var initializerValue = ResolveExpression(variableDeclarationStatement.InitializerValue);
+            if (initializerValue.Type == BuiltinTypes.Void) throw new Exception($"unable to instantiate type {BuiltinTypes.Void} for variable {variableDeclarationStatement.VariableName}");
             if (initializerValue.Type == BuiltinTypes.Nullptr) throw new Exception($"unable to determine type of variable {variableDeclarationStatement.VariableName}");
             _currentRunData.RegisterLocalVariable(variableDeclarationStatement.VariableName, initializerValue.Type);
             return new Models.VariableDeclarationStatement(initializerValue.Type, variableDeclarationStatement.VariableName, initializerValue);
@@ -328,7 +377,32 @@ namespace Loon.Analyzer._Analyzer
 
         private CrateType ResolveTypeSymbol(TypeSymbol typeSymbol)
         {
-            if (_registeredTypes.TryGetValue(typeSymbol.Name, out var type) && type != null)
+            if (typeSymbol.IsGenericTypeParameter) throw new Exception($"cannot resolve generic type parameter {typeSymbol}");
+            if (typeSymbol.HasGenericTypeArguments)
+            {
+                var instantiatedGenericType = _registeredTypes.FirstOrDefault(ty => ty.Name == typeSymbol.Name && ty.TypeArguments.Select(t => t.ToTypeSymbol()).SequenceEqual(typeSymbol.GenericTypeArguments));
+
+                if (instantiatedGenericType != null)
+                {
+                    return instantiatedGenericType;
+                } else
+                {
+                    if (!_genericTypeDefinitions.TryGetValue(typeSymbol.Name, out var genericDefinition)) throw new Exception($"unable to resolve generic symbol '{typeSymbol}' to type");
+                    if (genericDefinition.GenericTypeParameters.Count != typeSymbol.GenericTypeArguments.Count) throw new Exception($"error resolving symbol '{typeSymbol}' to type");
+                    var typeReplacements = new Dictionary<TypeSymbol, TypeSymbol>();
+                    for (int i = 0;i < genericDefinition.GenericTypeParameters.Count; i++)
+                    {
+                        typeReplacements[genericDefinition.GenericTypeParameters[i]] = typeSymbol.GenericTypeArguments[i];
+                    }
+                    var createdTypeDeclaration = genericDefinition.BuildNonGenericType(typeReplacements);
+                    var createdType = GatherTypeSignature(createdTypeDeclaration, typeSymbol.GenericTypeArguments);
+                    AnalyzeGenericTypeDeclaration(createdTypeDeclaration, createdType.TypeArguments);
+                    return createdType;
+                }                
+            }
+            if (typeSymbol.HasGenericTypeArguments) throw new Exception($"cannot resolve generic type {typeSymbol}");
+            var type = _registeredTypes.FirstOrDefault(ty => !ty.HasGenericTypeArguments && ty.Name == typeSymbol.Name);
+            if (type != null)
             {
                 return type;
             }
@@ -337,40 +411,33 @@ namespace Loon.Analyzer._Analyzer
 
         private CrateType ResolveTypeSymbol(TypeDeclarationField field)
         {
-            if (_registeredTypes.TryGetValue(field.FieldType.Name, out var type) && type != null)
-            {
-                if (field.Inline) return type.CreateInline();
-                return type;
-            }
-            throw new Exception($"unable to resolve symbol '{field.FieldType.Name}' to type");
+            var type = ResolveTypeSymbol(field.FieldType);
+            if (field.Inline) return type.CreateInline();
+            return type;
         }
 
         private CrateType ResolveReturnTypeSymbol(TypeSymbol typeSymbol)
         {
-            if (_registeredTypes.TryGetValue(typeSymbol.Name, out var type) && type != null)
-            {
-                return type;
-            }
-            if (typeSymbol.Name == BuiltinTypes.Void.Name) return BuiltinTypes.Void;
-            throw new Exception($"unable to resolve symbol '{typeSymbol.Name}' to type");
+            if (typeSymbol.Name == BuiltinTypes.Void.Name && !typeSymbol.HasGenericTypeArguments) return BuiltinTypes.Void;
+            return ResolveTypeSymbol(typeSymbol);
         }
 
         private void RegisterBuiltinTypes()
         {
-            _registeredTypes.Add("int8", BuiltinTypes.Int8);
-            _registeredTypes.Add("int16", BuiltinTypes.Int16);
-            _registeredTypes.Add("int32", BuiltinTypes.Int32);
-            _registeredTypes.Add("string", BuiltinTypes.String);
-            _registeredTypes.Add("double", BuiltinTypes.Double);
+            _registeredTypes.Add(BuiltinTypes.Int8);
+            _registeredTypes.Add(BuiltinTypes.Int16);
+            _registeredTypes.Add(BuiltinTypes.Int32);
+            _registeredTypes.Add(BuiltinTypes.String);
+            _registeredTypes.Add(BuiltinTypes.Double);
             //_registeredTypes.Add("void", BuiltinTypes.Void);
         }
 
         private void RegisterBuiltinFunctions()
         {
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "GetProcessHeap", BuiltinTypes.Int32, new(), new(), false));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "ExitProcess", BuiltinTypes.Void, new(), new(), false));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapAlloc", BuiltinTypes.Int32, new() { new("hHeap", BuiltinTypes.Int32), new("mode", BuiltinTypes.Int32), new("nBytes", BuiltinTypes.Int32) }, new(), false));
-            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapFree", BuiltinTypes.Int32, new() { new("dataPtr", BuiltinTypes.Int32) }, new(), false));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "GetProcessHeap", BuiltinTypes.Int32, new(), new(), false, true));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "ExitProcess", BuiltinTypes.Void, new(), new(), false, true));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapAlloc", BuiltinTypes.Int32, new() { new("hHeap", BuiltinTypes.Int32), new("mode", BuiltinTypes.Int32), new("nBytes", BuiltinTypes.Int32) }, new(), false, true));
+            _registeredFunctions.Add(new CrateFunction(true, false, CallingConvention.Invoke, "kernel32.dll", "HeapFree", BuiltinTypes.Int32, new() { new("dataPtr", BuiltinTypes.Int32) }, new(), false, true));
 
         }
 
@@ -400,7 +467,57 @@ namespace Loon.Analyzer._Analyzer
 
         private CrateFunction? GetRegisteredFunction(string calleeName, List<CrateType> argumentTypes)
         {
-            return _registeredFunctions.FirstOrDefault(fn => fn.Name == calleeName && fn.Parameters.Select(p => p.CrateType).ToList().SequenceEqual(argumentTypes, new AssignableTypeEqualityComparer()));
+            var function = _registeredFunctions.FirstOrDefault(fn => fn.Name == calleeName && fn.Parameters.Select(p => p.CrateType).ToList().SequenceEqual(argumentTypes, new AssignableTypeEqualityComparer()));
+            if (function == null)
+            {
+                foreach(var genFnDef in _genericFunctionDefinitions)
+                {
+                    if (genFnDef.FunctionName != calleeName) continue;
+                    if (argumentTypes.Count != genFnDef.Parameters.Count) continue;
+                    var resolvedTypes = new Dictionary<TypeSymbol, CrateType>();
+                    for(int i = 0; i < genFnDef.Parameters.Count; i++)
+                    {
+                        if (!Extract(argumentTypes[i], genFnDef.Parameters[i].ParameterType, ref resolvedTypes)) continue;
+                    }
+                    var resolvedTypeSymbols = new Dictionary<TypeSymbol, TypeSymbol>();
+                    foreach(var kv in resolvedTypes)
+                    {
+                        resolvedTypeSymbols[kv.Key] = kv.Value.ToTypeSymbol();
+                    }
+                    var functionDeclaration = genFnDef.BuildNonGenericFunctionDeclaration(resolvedTypeSymbols);
+                    var createdFn = GatherFunctionSignature(functionDeclaration);
+                    _functionsToAnalyze.Add(functionDeclaration);
+                    return createdFn;
+                }
+                return null;
+            }
+            return function;
+        }
+
+        private bool Extract(CrateType type, TypeSymbol typeSymbol, ref Dictionary<TypeSymbol, CrateType> resolvedTypes)
+        {
+            if (typeSymbol.IsGenericTypeParameter)
+            {
+                if (resolvedTypes.TryGetValue(typeSymbol, out var typeReplacement))
+                {
+                    if (type != typeReplacement) throw new Exception($"more than one type argument provided for {typeSymbol}. Provided arguments were {typeReplacement}, {type}");
+                    return true;
+                }
+                resolvedTypes.Add(typeSymbol, type);
+                return true;
+            }
+            if (type.Name == typeSymbol.Name)
+            {
+                if (!type.HasGenericTypeArguments && !typeSymbol.HasGenericTypeArguments) return true;
+                else if (type.TypeArguments.Count != typeSymbol.GenericTypeArguments.Count) return false;
+                for (int i = 0; i < typeSymbol.GenericTypeArguments.Count; i++)
+                {
+                    if (!Extract(type.TypeArguments[i], typeSymbol.GenericTypeArguments[i], ref resolvedTypes)) return false;
+                }
+                return true;
+            }
+          
+            return false;
         }
 
         private bool IsTruthyType(CrateType type)
@@ -413,7 +530,7 @@ namespace Loon.Analyzer._Analyzer
         {
             if (op == BinaryOperator.Equal || op == BinaryOperator.NotEqual)
             {
-                if (lhs == rhs || (lhs.IsNumeric && rhs.IsNumeric)) return BuiltinTypes.Int32;
+                if (lhs == rhs || (lhs.IsNumeric && rhs.IsNumeric) || (lhs.IsReferenceType && rhs == BuiltinTypes.Nullptr)) return BuiltinTypes.Int32;
                 return null;
             }
             if (op == BinaryOperator.LessThanEqual || op == BinaryOperator.LessThan || op == BinaryOperator.GreaterThanEqual || op == BinaryOperator.GreaterThan)

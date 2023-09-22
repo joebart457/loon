@@ -179,7 +179,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual())
                 .Append(Ins.MOV(Register.eax, valueToAssignAddr))
                 .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.eax));
@@ -193,7 +193,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual())
                 .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD(valueToAssignAddr, 4)))
                 .Append(Ins.MOV(Offset.CreateForDWORD($"{instanceAlias}.{field.Name}", 4), Register.eax))
@@ -209,7 +209,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual())
                 .Append(Ins.MOV(Register.al, valueToAssignAddr))
                 .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.al));
@@ -223,7 +223,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual())
                 .Append(Ins.MOV(Register.ax, valueToAssignAddr))
                 .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.ax));
@@ -237,7 +237,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual())
                 .Append(Ins.LEA(Register.eax, $"{instanceAlias}.{field.Name}"))
                 .Append(Ins.STDCALL("CopyMemory", $"{field.CrateType.GetAssemblySize()}, {Register.eax}, dword [{valueToAssignAddr}]"));
@@ -257,7 +257,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.TEST(Register.ebx, Register.ebx))
                 .Append(Ins.JZ("FAIL_NULL_PTR"))
                 .Append(Ins.VirtualAt(Register.ebx))
-                .Append($"\t{instanceAlias} {instanceType.Name}")
+                .Append($"\t{instanceAlias} {instanceType.GetDecoratedAssemblyName()}")
                 .Append(Ins.EndVirtual());
             if (field.CrateType == BuiltinTypes.Double)
             {
@@ -296,19 +296,19 @@ namespace Loon.Compiler._Generator
             {
                 var args = string.Join(", ", arguments.Select(x => ArgumentHelper(x.type, x.addr)));
                 return new CompilationUnit()
-                    .Append(Ins.STDCALL(function.Name, args));
+                    .Append(Ins.STDCALL(function.GetDecoratedAssemblyName(), args));
             }
             else if (function.CallingConvention == CallingConvention.CInvoke)
             {
                 var args = string.Join(", ", arguments.Select(x => ArgumentHelper(x.type, x.addr)));
                 return new CompilationUnit()
-                    .Append(Ins.CINVOKE(function.Name, args));
+                    .Append(Ins.CINVOKE(function.GetDecoratedAssemblyName(), args));
             }
             else if (function.CallingConvention == CallingConvention.Invoke)
             {
                 var args = string.Join(", ", arguments.Select(x => ArgumentHelper(x.type, x.addr)));
                 return new CompilationUnit()
-                    .Append(Ins.INVOKE(function.Name, args));
+                    .Append(Ins.INVOKE(function.GetDecoratedAssemblyName(), args));
             }
             throw new Exception($"unsupported calling convention {function.CallingConvention}");
         }

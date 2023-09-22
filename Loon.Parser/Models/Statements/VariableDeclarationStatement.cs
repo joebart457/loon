@@ -16,5 +16,10 @@ namespace Loon.Parser.Models.Statements
             VariableName = variableName;
             InitializerValue = initializerValue;
         }
+
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new VariableDeclarationStatement(VariableName, InitializerValue.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

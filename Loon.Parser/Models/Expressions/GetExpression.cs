@@ -15,5 +15,10 @@ namespace Loon.Parser.Models.Expressions
             InstanceTarget = instanceTarget;
             FieldName = fieldName;
         }
+
+        public override ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new GetExpression(InstanceTarget.ReplaceGenericTypeParameters(typeParameters), FieldName);
+        }
     }
 }

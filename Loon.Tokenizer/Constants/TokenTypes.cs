@@ -9,11 +9,13 @@ namespace Loon.Tokenizer.Constants
     public static class TokenTypes
     {
         public const string Type = "Type";
+        public const string Gen = "Gen";
         public const string Function = "Function";
         public const string LCurly = "LCurly";
         public const string RCurly = "RCurly";
         public const string LParen = "LParen";
         public const string RParen = "RParen";
+
 
         public const string Dot = "Dot";
         public const string Colon = "Colon";

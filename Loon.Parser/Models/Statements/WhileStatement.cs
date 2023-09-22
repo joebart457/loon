@@ -16,5 +16,10 @@ namespace Loon.Parser.Models.Statements
             Condition = condition;
             Then = then;
         }
+
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new WhileStatement(Condition.ReplaceGenericTypeParameters(typeParameters), Then.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

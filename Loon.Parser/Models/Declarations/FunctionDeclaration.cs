@@ -44,4 +44,40 @@ namespace Loon.Parser.Models.Declarations
             IsExport = isExport;
         }
     }
+    
+    public class GenericFunctionDeclaration : DeclarationBase
+    {
+        public bool IsFFI { get; set; } = false;
+        public bool IsEntry { get; set; } = false;
+        public bool IsExport { get; set; } = false;
+        public string Module { get; set; }
+        public TypeSymbol ReturnType { get; set; }
+        public string FunctionName { get; set; } = "";
+        public CallingConvention CallingConvention { get; set; }
+        public List<TypeSymbol> GenericTypeParameters { get; set; } = new ();
+
+        public List<FunctionDeclarationParameter> Parameters { get; set; } = new();
+        public List<StatementBase> Body { get; set; } = new();
+        public GenericFunctionDeclaration(bool isFFI, bool isEntry, CallingConvention callingConvention, string module, TypeSymbol returnType, string functionName, List<TypeSymbol> genericTypeParameters, List<FunctionDeclarationParameter> parameters, List<StatementBase> body, bool isExport)
+        {
+            IsFFI = isFFI;
+            IsEntry = isEntry;
+            CallingConvention = callingConvention;
+            Module = module;
+            ReturnType = returnType;
+            FunctionName = functionName;
+            GenericTypeParameters = genericTypeParameters;
+            Parameters = parameters;
+            Body = body;
+            IsExport = isExport;
+        }
+
+        public FunctionDeclaration BuildNonGenericFunctionDeclaration(Dictionary<TypeSymbol, TypeSymbol> resolvedTypeParameters)
+        {
+            var parameters = Parameters.Select(p => new FunctionDeclarationParameter(p.ParameterName, p.ParameterType.ReplaceMatchingTypeSymbols(resolvedTypeParameters))).ToList();
+            var statements = Body.Select(s => s.ReplaceGenericTypeParameters(resolvedTypeParameters)).ToList();
+            return new FunctionDeclaration(IsFFI, IsEntry, CallingConvention, Module, ReturnType.ReplaceMatchingTypeSymbols(resolvedTypeParameters), FunctionName, parameters, statements, IsExport);
+        }
+
+    }
 }

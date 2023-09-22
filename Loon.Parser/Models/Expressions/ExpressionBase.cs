@@ -9,5 +9,9 @@ namespace Loon.Parser.Models.Expressions
 {
     public class ExpressionBase
     {
+        public virtual ExpressionBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return this;
+        }
     }
 }

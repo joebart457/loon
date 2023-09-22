@@ -20,5 +20,9 @@ namespace Loon.Parser.Models.Statements
             Else = @else;
         }
 
+        public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
+        {
+            return new IfStatement(Condition.ReplaceGenericTypeParameters(typeParameters), Then.ReplaceGenericTypeParameters(typeParameters), Else?.ReplaceGenericTypeParameters(typeParameters));
+        }
     }
 }

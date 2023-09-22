@@ -22,7 +22,7 @@ namespace Loon.Compiler.Models
         {
             var sb = new StringBuilder();
             sb.AppendLine($"; type {CrateType}");
-            sb.AppendLine($"struc {CrateType.Name} {{".Indent(indentLevel));
+            sb.AppendLine($"struc {CrateType.GetDecoratedAssemblyName()} {{".Indent(indentLevel));
             foreach (var field in CrateType.Fields)
             {
                 sb.AppendLine($".{field.Name} {GetDataDefinition(CrateType)}".Indent(indentLevel + 1));

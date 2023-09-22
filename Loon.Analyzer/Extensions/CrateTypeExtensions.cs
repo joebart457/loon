@@ -1,5 +1,6 @@
 ﻿using Crater.Shared.Models;
 using Loon.Analyzer._Analyzer;
+using Loon.Parser.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,13 @@ namespace Loon.Analyzer.Extensions
         public static CrateType CreateInline(this CrateType type)
         {
             return new CrateType(type.Name, type.Fields, false);
+        }
+
+        public static TypeSymbol ToTypeSymbol(this CrateType type)
+        {
+            var typeSymbol = new TypeSymbol(type.Name, new(), false);
+            typeSymbol.GenericTypeArguments = type.TypeArguments.Select(t => t.ToTypeSymbol()).ToList();
+            return typeSymbol;
         }
     }
 }
