@@ -229,6 +229,7 @@ namespace Loon.Analyzer._Analyzer
         private TypedExpression ResolveExpression(ExpressionBase expression)
         {
             if (expression is Parser.Models.Expressions.AssignmentExpression assignmentExpression) return ResolveAssignmentExpression(assignmentExpression);
+            if (expression is Parser.Models.Expressions.SizeOfExpression sizeOfExpression) return ResolveSizeOfExpression(sizeOfExpression);
             if (expression is Parser.Models.Expressions.BinaryExpression binaryExpression) return ResolveBinaryExpression(binaryExpression);
             if (expression is Parser.Models.Expressions.UnaryExpression unaryExpression) return ResolveUnaryExpression(unaryExpression);
             if (expression is Parser.Models.Expressions.CallExpression callExpression) return ResolveCallExpression(callExpression);
@@ -256,6 +257,12 @@ namespace Loon.Analyzer._Analyzer
             return new Models.AssignmentExpression(type, null, new CrateFieldInfo(assignmentExpression.AssignmentTarget, type), valueToAssign);
         }
 
+
+        private TypedExpression ResolveSizeOfExpression(Parser.Models.Expressions.SizeOfExpression sizeOfExpression)
+        {
+            var type = ResolveTypeSymbol(sizeOfExpression.TypeSymbol);
+            return new Models.SizeOfExpression(type);
+        }
         private TypedExpression ResolveBinaryExpression(Parser.Models.Expressions.BinaryExpression binaryExpression)
         {
             var lhs = ResolveExpression(binaryExpression.Lhs);

@@ -1,7 +1,7 @@
 type ls_node {
 	.dat int32
-	.next gc_ls_node
-	.prev gc_ls_node
+	.next ls_node
+	.prev ls_node
 }
 
 type ls_wrapper {
@@ -36,11 +36,11 @@ fn ls_remove_node(ls_wrapper ls, int32 dat): int32 {
 fn ls_add_node(ls_wrapper ls, int32 dat): int32 {
 	if (ls == nullptr) return 0;
 	if (ls.last == nullptr){
-		ls.last = create ls_node();
+		ls.last = create_ls_node();
 		ls.first = ls.last;
 		ls.last.dat = dat;
 	} else {
-		var node = create ls_node();
+		var node = create_ls_node();
 		ls.last.next = node;
 		node.prev = ls.last;
 		ls.last = node;
@@ -48,12 +48,20 @@ fn ls_add_node(ls_wrapper ls, int32 dat): int32 {
 	return 1;
 }
 
+fn create_ls_node(): ls_node {
+	__asm {{
+		stdcall HeapAlloc [_hHeap], dword 8, dword 12
+		test eax, eax
+		jz FAIL_ALLOC
+		ret
+	}}
+}
 
 
 
-
-type gc_gray_ls_wrapper {
-	.first gc_ls_node
+type gc_info {
+	.datPtr int32
+	.fnPtr int32
 }
 
 
@@ -76,6 +84,40 @@ fn AddWhiteNode(int32 datPtr): void_t {
 		ret
 	}}
 }
+
+fn RemoveWhiteNode(int32 datPtr): void_t {
+	__asm {{
+		stdcall ls_remove_node, [_gc_white], [!datPtr]
+		ret
+	}}
+}
+
+fn create_gc_info(int32 datPtr, int32 fnPtr): gc_info {
+	__asm {{
+		stdcall HeapAlloc [_hHeap], dword 8, dword 8
+		test eax, eax
+		jz FAIL_ALLOC
+		virtual at eax
+			virt_gc_info gc_info
+		end virtual
+		mov ebx, [!datPtr]
+		mov [virt_gc_info.dat], ebx
+		mov ebx, [!fnPtr]
+		mov [virt_gc_info.fnPtr], ebx
+		ret
+	}}
+}
+
+
+fn AddGrayNode(int32 datPtr, int32 fnPtr): void_t {
+	var gc_info_to_add = create_gc_info();
+	var node = create_ls_node()
+	__asm {{
+		stdcall ls_add_node, [_gc_gray], [!gc_info_to_add]
+		ret
+	}}
+}
+
 
 fn RemoveWhiteNode(int32 datPtr): void_t {
 	__asm {{

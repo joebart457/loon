@@ -13,6 +13,8 @@ namespace Loon.Compiler.Extensions
         public static int GetAssemblySize(this CrateType type)
         {
             int size = 0;
+            if (type == BuiltinTypes.Int8) return 1;
+            if (type == BuiltinTypes.Int16) return 2;
             if (type == BuiltinTypes.Int32) return 4;
             if (type == BuiltinTypes.Double) return 8;
             if (type == BuiltinTypes.String) return 4;

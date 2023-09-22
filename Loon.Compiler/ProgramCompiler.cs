@@ -244,12 +244,19 @@ namespace Loon.Compiler
             CompilationState.Add(Templates.Comment(typedExpression));
             if (typedExpression is AssignmentExpression assignmentExpression) CompileAssignment(assignmentExpression, destination);
             if (typedExpression is GetExpression getExpression) CompileGet(getExpression, destination);
+            if (typedExpression is SizeOfExpression sizeOfExpression) CompileSizeOf(sizeOfExpression, destination);
             if (typedExpression is CallExpression callExpression) CompileCall(callExpression, destination);
             if (typedExpression is IdentifierExpression identifierExpression) CompileIdentifier(identifierExpression, destination);
             if (typedExpression is LiteralExpression literalExpression) CompileLiteral(literalExpression, destination);
             if (typedExpression is BinaryExpression binaryExpression) CompileBinary(binaryExpression, destination);
             if (typedExpression is UnaryExpression unaryExpression) CompileUnary(unaryExpression, destination);
             if (typedExpression is TypeInitializerExpression typeInitializerExpression) CompileTypeInitializer(typeInitializerExpression, destination);
+        }
+
+        private void CompileSizeOf(SizeOfExpression sizeOfExpression, LocalVariable destination)
+        {
+            if (destination.IsDiscard) return;
+            CompilationState.Add(Templates.Mov(destination.Symbol, sizeOfExpression.TypeArgument.GetAssemblySize()));
         }
 
         private void CompileAssignment(AssignmentExpression assignmentExpression, LocalVariable destination)

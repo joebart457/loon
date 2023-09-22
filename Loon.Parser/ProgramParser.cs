@@ -391,6 +391,14 @@ namespace Loon.Parser
             {
                 return new LiteralExpression(Previous().Lexeme);
             }
+            if (AdvanceIfMatch(TokenTypes.SizeOf))
+            {
+                Consume(TokenTypes.LParen, "expect sizeof(<type_symbol>)");
+                var symbol = ParseTypeSymbol();
+                Consume(TokenTypes.RParen, "expect sizeof(<type_symbol>)");
+                return new SizeOfExpression(symbol);
+            }
+
             if (AdvanceIfMatch(TokenTypes.LParen))
             {
                 var expr = ParseExpression();
