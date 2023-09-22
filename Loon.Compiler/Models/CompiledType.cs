@@ -25,7 +25,7 @@ namespace Loon.Compiler.Models
             sb.AppendLine($"struc {CrateType.GetDecoratedAssemblyName()} {{".Indent(indentLevel));
             foreach (var field in CrateType.Fields)
             {
-                sb.AppendLine($".{field.Name} {GetDataDefinition(CrateType)}".Indent(indentLevel + 1));
+                sb.AppendLine($".{field.Name} {GetDataDefinition(field.CrateType)}".Indent(indentLevel + 1));
             }
             sb.AppendLine($"}}".Indent(indentLevel));
             return sb.ToString();

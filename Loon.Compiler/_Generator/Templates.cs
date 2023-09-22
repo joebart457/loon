@@ -198,7 +198,7 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD(valueToAssignAddr, 4)))
                 .Append(Ins.MOV(Offset.CreateForDWORD($"{instanceAlias}.{field.Name}", 4), Register.eax))
                 .Append(Ins.MOV(Register.eax, Size.DWORD(valueToAssignAddr)))
-                .Append(Ins.MOV($"{instanceAlias}.{field.Name}", Register.eax));
+                .Append(Ins.MOV(Size.DWORD($"{instanceAlias}.{field.Name}"), Register.eax));
         }
 
         public static CompilationUnit AssignMemberb(string instanceAddr, CrateType instanceType, CrateFieldInfo field, string valueToAssignAddr)
@@ -261,17 +261,17 @@ namespace Loon.Compiler._Generator
                 .Append(Ins.EndVirtual());
             if (field.CrateType == BuiltinTypes.Double)
             {
-                unit.Append(Ins.MOV(Register.eax, $"{instanceAlias}.{field.Name}"))
-                    .Append(Ins.MOV(destAddr, Register.eax))
+                unit.Append(Ins.MOV(Register.eax, Size.DWORD($"{instanceAlias}.{field.Name}")))
+                    .Append(Ins.MOV(Size.DWORD(destAddr), Register.eax))
                     .Append(Ins.MOV(Register.eax, Offset.CreateForDWORD($"{instanceAlias}.{field.Name}", 4)))
                     .Append(Ins.MOV(Offset.CreateForDWORD(destAddr, 4), Register.eax));
             }
-            if (field.CrateType == BuiltinTypes.Int8)
+            else if (field.CrateType == BuiltinTypes.Int8)
             {
                 unit.Append(Ins.MOV(Register.al, $"{instanceAlias}.{field.Name}"))
                     .Append(Ins.MOV(destAddr, Register.al));
             }
-            if (field.CrateType == BuiltinTypes.Int8)
+            else if (field.CrateType == BuiltinTypes.Int8)
             {
                 unit.Append(Ins.MOV(Register.ax, $"{instanceAlias}.{field.Name}"))
                     .Append(Ins.MOV(destAddr, Register.ax));
