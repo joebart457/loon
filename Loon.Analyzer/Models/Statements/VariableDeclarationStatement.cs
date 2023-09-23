@@ -22,7 +22,7 @@ namespace Loon.Analyzer.Models
 
         public override string RegenerateCode(int indentLevel = 0)
         {
-            return $"var {VariableName} = {InitializerValue.RegenerateCode(0)};";
+            return $"var {VariableName}: {VariableType} = {InitializerValue.RegenerateCode(0)};";
         }
     }
 }

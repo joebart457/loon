@@ -265,10 +265,19 @@ namespace Loon.Analyzer._Analyzer
         {
             if (_currentRunData.CurrentScopedFunction == null) throw new Exception($"variables can only be declared within a function body");
             var initializerValue = ResolveExpression(variableDeclarationStatement.InitializerValue);
-            if (initializerValue.Type == BuiltinTypes.Void) throw new Exception($"unable to instantiate type {BuiltinTypes.Void} for variable {variableDeclarationStatement.VariableName}");
-            if (initializerValue.Type == BuiltinTypes.Nullptr) throw new Exception($"unable to determine type of variable {variableDeclarationStatement.VariableName}");
+            CrateType variableType;
+            if (variableDeclarationStatement.TypeSymbol != null)
+            {
+                variableType = ResolveTypeSymbol(variableDeclarationStatement.TypeSymbol);
+            }else
+            {
+                variableType = initializerValue.Type;
+            }
+            if (variableType == BuiltinTypes.Void) throw new Exception($"unable to instantiate type {BuiltinTypes.Void} for variable {variableDeclarationStatement.VariableName}");
+            if (variableType == BuiltinTypes.Nullptr) throw new Exception($"unable to determine type of variable {variableDeclarationStatement.VariableName}");
+            if (!variableType.IsAssignableFrom(variableType)) throw new Exception($"unable to instantiate variable of type {variableType} with value of type {initializerValue.Type}");
             _currentRunData.RegisterLocalVariable(variableDeclarationStatement.VariableName, initializerValue.Type);
-            return new Models.VariableDeclarationStatement(initializerValue.Type, variableDeclarationStatement.VariableName, initializerValue);
+            return new Models.VariableDeclarationStatement(variableType, variableDeclarationStatement.VariableName, initializerValue);
         }
 
         #endregion

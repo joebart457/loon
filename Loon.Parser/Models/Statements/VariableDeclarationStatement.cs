@@ -9,17 +9,19 @@ namespace Loon.Parser.Models.Statements
 {
     public class VariableDeclarationStatement: StatementBase
     {
+        public TypeSymbol? TypeSymbol { get; set; }
         public string VariableName { get; set; }
         public ExpressionBase InitializerValue { get; set; }
-        public VariableDeclarationStatement(string variableName, ExpressionBase initializerValue)
+        public VariableDeclarationStatement(TypeSymbol? typeSymbol, string variableName, ExpressionBase initializerValue)
         {
+            TypeSymbol = typeSymbol;
             VariableName = variableName;
             InitializerValue = initializerValue;
         }
 
         public override StatementBase ReplaceGenericTypeParameters(Dictionary<TypeSymbol, TypeSymbol> typeParameters)
         {
-            return new VariableDeclarationStatement(VariableName, InitializerValue.ReplaceGenericTypeParameters(typeParameters));
+            return new VariableDeclarationStatement(TypeSymbol?.ReplaceMatchingTypeSymbols(typeParameters), VariableName, InitializerValue.ReplaceGenericTypeParameters(typeParameters));
         }
     }
 }

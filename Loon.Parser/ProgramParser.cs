@@ -213,10 +213,12 @@ namespace Loon.Parser
         private StatementBase ParseVariableDeclarationStatement()
         {
             var variableName = Consume(BuiltinTokenTypes.Word, "expect variable name in declaration");
+            TypeSymbol? variableType = null;
+            if (AdvanceIfMatch(TokenTypes.Colon)) variableType = ParseTypeSymbol();
             Consume(TokenTypes.Equal, "expect initializer in declaration");
             var initializerValue = ParseExpression();
             Consume(TokenTypes.SemiColon, "expect ; after statement");
-            return new VariableDeclarationStatement(variableName.Lexeme, initializerValue);
+            return new VariableDeclarationStatement(variableType, variableName.Lexeme, initializerValue);
         }
 
         private StatementBase ParseReturnStatement()
