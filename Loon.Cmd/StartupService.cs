@@ -14,7 +14,7 @@ namespace Loon.Cmd
     internal class StartupService
     {
         [Command()]
-        public static int Compile(string inputPath, string? outputPath = null, string? assemblyOutputPath = null, string? target = "exe", bool noGC = false)
+        public static int Compile(string inputPath, string? outputPath = null, string? assemblyOutputPath = null, string? target = "exe", bool noGC = false, bool sourceComments = true)
         {
             if (!Enum.TryParse<OutputType>(target, true, out var compilerOutputType))
             {
@@ -29,6 +29,7 @@ namespace Loon.Cmd
                 settings.InputFilePath = inputPath;
                 settings.AssemblyOutputPath = assemblyOutputPath ?? string.Empty;
                 settings.FinalOutputPath = outputPath ?? string.Empty;
+                settings.IncludeSourceComments = sourceComments;
                 var compiler = new ProgramCompiler();
                 var err = compiler.Compile(settings);
                 if (err == null)

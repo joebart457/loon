@@ -23,7 +23,11 @@ namespace Loon.Compiler.Models._Function
 
         public string GenerateAssembly(CompilationSettings settings, int indentLevel = 0)
         {
-            if (CrateType == BuiltinTypes.Void) return $";local {Symbol}:?? ; local not created for void_t";
+            if (CrateType == BuiltinTypes.Void)
+            {
+                if (settings.IncludeSourceComments) return $";local {Symbol}:?? ; local not created for void_t".Indent(indentLevel);
+                return "";
+            }
             return $"local {Symbol}:{GetLocalVariableType(CrateType)} ; local for type {CrateType}".Indent(indentLevel);
         }
 

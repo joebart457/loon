@@ -42,12 +42,12 @@ namespace Loon.Compiler.Models._Function
             sb.AppendLine(GetProcessSignature(indentLevel));
             foreach(var local in _locals)
             {
-                sb.AppendLine(local.GenerateAssembly(settings, indentLevel + 1));
+                sb.AppendLineIfNotEmpty(local.GenerateAssembly(settings, indentLevel + 1));
             }
             sb.AppendLine();
             foreach(var compilationUnit in _compilationUnits)
             {
-                sb.AppendLine(compilationUnit.GenerateAssembly(settings, indentLevel + 1));
+                sb.AppendLineIfNotEmpty(compilationUnit.GenerateAssembly(settings, indentLevel + 1));
             }
             sb.AppendLine(Ins.ENDP().Indent(indentLevel));
             return sb.ToString();

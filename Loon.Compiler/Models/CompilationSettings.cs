@@ -18,5 +18,6 @@ namespace Loon.Compiler.Models
         public string InputFilePath { get; set; } = "";
         public string AssemblyOutputPath { get; set; } = "";
         public string FinalOutputPath { get; set; } = "";
+        public bool IncludeSourceComments { get; set; } = true;
     }
 }

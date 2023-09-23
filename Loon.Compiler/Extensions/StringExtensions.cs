@@ -23,5 +23,12 @@ namespace Loon.Compiler.Extensions
             if (string.IsNullOrWhiteSpace(src)) return src;
             return $"{src.Substring(0, 1).ToUpper()}{src.Substring(1)}";
         }
+
+        public static StringBuilder AppendLineIfNotEmpty(this StringBuilder sb, string str)
+        {
+            if (string.IsNullOrEmpty(str)) return sb;
+            sb.AppendLine(str);
+            return sb;
+        }
     }
 }

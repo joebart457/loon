@@ -38,8 +38,12 @@ namespace Loon.Compiler.Models._CompilationUnit
         public string GenerateAssembly(CompilationSettings settings, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            if (Statement_Origin != null) sb.AppendLine($"; {Statement_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine+";")}");
-            if (Expression_Origin != null) sb.AppendLine($"; {Expression_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine + ";")}");
+            if (settings.IncludeSourceComments)
+            {
+                if (Statement_Origin != null) sb.AppendLine($"; {Statement_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine + ";")}");
+                if (Expression_Origin != null) sb.AppendLine($"; {Expression_Origin.RegenerateCode(0).ReplaceLineEndings(Environment.NewLine + ";")}");
+            }
+
             foreach (var codePiece in CodePieces)
             {
                 sb.AppendLine(codePiece.ToString().Indent(indentLevel));
